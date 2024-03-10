@@ -1,5 +1,4 @@
 import pytest
-
 from mockify.api import ABCMock, satisfied
 
 from bumpify.core.filesystem.interface import IFileSystemReaderWriter

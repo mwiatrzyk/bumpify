@@ -1,6 +1,4 @@
 import os
-import textwrap
-
 from typing import Iterator, Set
 
 from bumpify import utils
@@ -44,6 +42,7 @@ class FileSystemReaderWriter(IFileSystemReaderWriter):
         return self._abspath(path or "")
 
     def scan(self, exclude: Set[str] = None) -> Iterator[str]:
+
         def gen(abspath: str, path: str):
             for name in os.listdir(abspath):
                 name_abspath = os.path.join(abspath, name)
@@ -124,10 +123,18 @@ class DryRunFileSystemReaderWriterProxy(IFileSystemWriter):
 
     def _write_str(self, path: str, action: str, content: str):
         content = StyledMultiline(content, indent="  ", name="file-content")
-        self._notifier.info("Would", action, "file at", path, "and set it with following content:", content)
+        self._notifier.info(
+            "Would", action, "file at", path, "and set it with following content:", content
+        )
 
     def _write_bytes(self, path: str, action: str, content: bytes):
         content_size_str = Styled(f"{len(content)} bytes", name="highlighted")
         self._notifier.info(
-            "Would", action, "file at", path, "and set it with content having", content_size_str, "in total"
+            "Would",
+            action,
+            "file at",
+            path,
+            "and set it with content having",
+            content_size_str,
+            "in total",
         )

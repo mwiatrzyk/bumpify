@@ -1,5 +1,5 @@
-import typing
 import textwrap
+import typing
 
 
 class BumpifyError(Exception):
@@ -47,7 +47,10 @@ class ShellCommandError(BumpifyError):
         return f"\n{textwrap.indent(name, indent)}:\n{textwrap.indent(str(value), indent*2)}"
 
     def __str__(self) -> str:
-        out = [self._format_property("args", self.args), self._format_property("returncode", self.returncode)]
+        out = [
+            self._format_property("args", self.args),
+            self._format_property("returncode", self.returncode),
+        ]
         if self.stdout:
             out.append(self._format_property("stdout", self.stdout_str))
         if self.stderr:

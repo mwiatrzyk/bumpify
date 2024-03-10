@@ -2,12 +2,14 @@ import random
 import typing
 
 import pytest
-
 from mockify.api import Return, _
 
 from bumpify.core.filesystem import exc as fs_exc
+from bumpify.core.filesystem.implementation import (
+    DryRunFileSystemReaderWriterProxy,
+    FileSystemReaderWriter,
+)
 from bumpify.core.filesystem.interface import IFileSystemReaderWriter
-from bumpify.core.filesystem.implementation import DryRunFileSystemReaderWriterProxy, FileSystemReaderWriter
 from bumpify.core.notifier.objects import Styled, StyledMultiline
 
 
@@ -61,7 +63,9 @@ class TestFileSystemReaderWriter:
         sut.write(path, payload)
         assert sut.read(path) == payload
 
-    def test_write_fails_if_relative_path_is_used(self, sut: SUT, relative_path: str, payload: bytes):
+    def test_write_fails_if_relative_path_is_used(
+        self, sut: SUT, relative_path: str, payload: bytes
+    ):
         with pytest.raises(fs_exc.RelativePathUsed) as excinfo:
             sut.write(relative_path, payload)
         assert excinfo.value.path == relative_path
@@ -76,7 +80,9 @@ class TestFileSystemReaderWriter:
             sut.exists(relative_path)
         assert excinfo.value.path == relative_path
 
-    def test_exists_returns_false_if_file_does_not_exist_or_true_otherwise(self, sut: SUT, path: str, payload: bytes):
+    def test_exists_returns_false_if_file_does_not_exist_or_true_otherwise(
+        self, sut: SUT, path: str, payload: bytes
+    ):
         assert not sut.exists(path)
         sut.write(path, payload)
         assert sut.exists(path)
@@ -88,14 +94,18 @@ class TestFileSystemReaderWriter:
         sut.write(path, payload)
         assert sut.modified_paths() == {normalized_path}
 
-    def test_when_clear_modified_paths_called_then_set_of_modified_paths_is_cleared(self, sut: SUT, path, payload, normalized_path):
+    def test_when_clear_modified_paths_called_then_set_of_modified_paths_is_cleared(
+        self, sut: SUT, path, payload, normalized_path
+    ):
         assert sut.modified_paths() == set()
         sut.write(path, payload)
         assert sut.modified_paths() == {normalized_path}
         sut.clear_modified_paths()
         assert sut.modified_paths() == set()
 
-    def test_scan_returns_normalized_created_file_path(self, sut: SUT, path: str, normalized_path: str, payload: bytes):
+    def test_scan_returns_normalized_created_file_path(
+        self, sut: SUT, path: str, normalized_path: str, payload: bytes
+    ):
         sut.write(path, payload)
         assert set(sut.scan()) == {normalized_path}
 
@@ -109,7 +119,11 @@ class TestFileSystemReaderWriter:
         ],
     )
     def test_when_exclude_given_then_scan_ignores_excluded_paths(
-        self, sut: SUT, paths: typing.List[str], exclude: typing.Set[str], expected_result: typing.Set[str]
+        self,
+        sut: SUT,
+        paths: typing.List[str],
+        exclude: typing.Set[str],
+        expected_result: typing.Set[str],
     ):
         for path in paths:
             sut.write(path, b"dummy content")
@@ -134,7 +148,9 @@ class TestDryRunFileSystemReaderWriterProxy:
             ("dummy.txt", True),
         ],
     )
-    def test_when_reader_interface_method_called_then_call_is_forwarded_to_target(self, sut: SUT, args, result):
+    def test_when_reader_interface_method_called_then_call_is_forwarded_to_target(
+        self, sut: SUT, args, result
+    ):
         self.target_mock.exists.expect_call(args).will_once(Return(result))
         assert sut.exists(args) is result
 
@@ -202,7 +218,9 @@ class TestDryRunFileSystemReaderWriterProxy:
         self.notifier_mock.info.expect_call(*expected_message)
         sut.write(path, payload)
 
-    def test_when_write_called_then_path_is_added_to_modified_paths(self, sut: SUT, path, normalized_path):
+    def test_when_write_called_then_path_is_added_to_modified_paths(
+        self, sut: SUT, path, normalized_path
+    ):
         self.target_mock.exists.expect_call(path).will_once(Return(True))
         self.notifier_mock.info.expect_call(_, _, _, _, _, _)
         assert sut.modified_paths() == set()

@@ -1,9 +1,9 @@
 import contextlib
+import logging
 import os
 import subprocess
 import sys
 import typing
-import logging
 
 from . import exc
 
@@ -27,7 +27,9 @@ def shell_exec(*args, input: bytes = None, fail_on_stderr: bool = False) -> byte
     """
     args = tuple(x for x in args if x is not None)
     logger.debug("Running shell command: %r", args)
-    p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+    p = subprocess.Popen(
+        args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE
+    )
     stdout, stderr = (x.strip() for x in p.communicate(input=input))
     if p.returncode != 0 or (fail_on_stderr and stderr):
         raise exc.ShellCommandError(args, p.returncode, stdout, stderr)

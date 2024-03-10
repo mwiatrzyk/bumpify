@@ -3,10 +3,7 @@ import typing
 
 import tomlkit
 
-from .interface import (
-    IFileSystemReader,
-    IFileSystemWriter,
-)
+from .interface import IFileSystemReader, IFileSystemWriter
 
 
 def read_toml(fs: IFileSystemReader, path: str) -> tomlkit.TOMLDocument:
@@ -50,7 +47,9 @@ def write_toml(
     fs.write(path, payload)
 
 
-def iter_lines(fs_api: IFileSystemReader, path: str, encoding: str = "utf-8") -> typing.Iterator[str]:
+def iter_lines(
+    fs_api: IFileSystemReader, path: str, encoding: str = "utf-8"
+) -> typing.Iterator[str]:
     """Helper function that reads file in text mode and returns iterator yielding file lines.
 
     :param fs_api:

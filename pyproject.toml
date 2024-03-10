@@ -11,10 +11,11 @@ python = "^3.9"
 click = "^8.1.7"
 pydio = "^0.4.1"
 
-
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0.2"
 mockify = "^0.13.1"
+black = "^24.2.0"
+isort = "^5.13.2"
 
 [build-system]
 requires = ["poetry-core"]
