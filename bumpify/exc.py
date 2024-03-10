@@ -1,5 +1,8 @@
+import dataclasses
 import textwrap
 import typing
+
+import pydantic
 
 
 class BumpifyError(Exception):
@@ -66,3 +69,35 @@ class ShellCommandError(BumpifyError):
     def stderr_str(self) -> str:
         """Command's STDERR decoded to string."""
         return self.stderr.decode()
+
+
+class ValidationError(BumpifyError):
+    """Generic exception for wrapping Pydantic validation error behind Bumpify
+    specific exception class."""
+
+    class ErrorItem:
+        """Wraps single error."""
+
+        def __init__(self, error: dict):
+            self._error = error
+
+        @property
+        def loc_str(self) -> str:
+            return ".".join(str(x) for x in self._error["loc"])
+
+        @property
+        def msg(self) -> str:
+            return self._error["msg"]
+
+    #: List of validation errors.
+    errors: typing.List[ErrorItem]
+
+    #: Original Pydantic's validation error.
+    original_exc: pydantic.ValidationError
+
+    def __init__(self, original_exc: pydantic.ValidationError):
+        super().__init__(original_exc)
+        self.errors = [self.ErrorItem(e) for e in original_exc.errors()]
+
+    def __str__(self):
+        return str(self.original_exc)

@@ -1,4 +1,5 @@
 import contextlib
+import enum
 import logging
 import os
 import subprocess
@@ -77,3 +78,17 @@ def try_decode(data: bytes, encodings: typing.Sequence[str] = None) -> typing.Un
 def debug(*values):
     """Same as :func:`print`, but prints to STDERR."""
     print(*values, file=sys.stderr, flush=True)
+
+
+def json_any(v):
+    """Convert value *v* of any type to a closest JSON-compatible type."""
+    if isinstance(v, dict):
+        return json_dict(v)
+    if isinstance(v, enum.Enum):
+        return v.value
+    return v
+
+
+def json_dict(d: dict) -> dict:
+    """Convert all values of dict *d* to JSON-compatible types."""
+    return {k: json_any(v) for k, v in d.items()}

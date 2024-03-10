@@ -6,6 +6,17 @@ class IFileSystemReader(abc.ABC):
     """A read-only interface to access project files."""
 
     @abc.abstractmethod
+    def abspath(self, path: str) -> str:
+        """Return absolute path to the file given by relative *path*.
+
+        This is not meant to be used to directly manipulate underlying files,
+        but is handy when it comes to printing paths to the user.
+
+        :param path:
+            The path for which an absolute path will be returned.
+        """
+
+    @abc.abstractmethod
     def scan(self, exclude: typing.Set[str] = None) -> typing.Iterator[str]:
         """Scan through the filesystem, generating paths to existing files.
 

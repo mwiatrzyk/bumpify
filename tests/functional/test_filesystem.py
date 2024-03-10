@@ -1,3 +1,4 @@
+import os
 import random
 import typing
 
@@ -58,6 +59,14 @@ class TestFileSystemReaderWriter:
     @pytest.fixture
     def sut(self, tmpdir):
         return FileSystemReaderWriter(tmpdir)
+
+    def test_return_absolute_path_to_a_file_and_check_if_the_file_exists(
+        self, sut: SUT, path, payload
+    ):
+        abspath = sut.abspath(path)
+        assert not os.path.exists(abspath)
+        sut.write(path, payload)
+        assert os.path.exists(abspath)
 
     def test_write_file_and_read_it_back(self, sut: SUT, path: str, payload: bytes):
         sut.write(path, payload)
