@@ -1,0 +1,46 @@
+version: 2.1
+
+commands:
+  install-deps:
+    parameters:
+      ver_major:
+        type: integer
+      ver_minor:
+        type: integer
+    steps:
+      - run: pyenv local <<parameters.ver_major>>.<<parameters.ver_minor>>
+      - restore_cache:
+          name: restore dependency cache
+          keys:
+            - poetry-py<<parameters.ver_major>><<parameters.ver_minor>>-{{ checksum "poetry.lock" }}
+      - run: poetry env use <<parameters.ver_major>>.<<parameters.ver_minor>>
+      - run: poetry install -q
+      - save_cache:
+          name: save dependency cache
+          key: poetry-py<<parameters.ver_major>><<parameters.ver_minor>>-{{ checksum "poetry.lock" }}
+          paths:
+            - ~/.cache/pypoetry/
+
+jobs:
+  test:
+    docker:
+      - image: cimg/python:<<parameters.ver_major>>.<<parameters.ver_minor>>
+    parameters:
+      ver_minor:
+        type: integer
+      ver_major:
+        type: integer
+    steps:
+      - checkout
+      - install-deps:
+          ver_major: <<parameters.ver_major>>
+          ver_minor: <<parameters.ver_minor>>
+      - run: poetry run pytest
+
+workflows:
+  test:
+    jobs:
+      - test:
+          name: "test-py39"
+          ver_major: 3
+          ver_minor: 9
