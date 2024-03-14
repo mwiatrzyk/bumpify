@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 T = typing.TypeVar("T")
 
 
-def shell_exec(*args, input: bytes = None, fail_on_stderr: bool = False) -> bytes:
+def shell_exec(*args, input: bytes = None, fail_on_stderr: bool = False, env: dict=None) -> bytes:
     """Execute shell command and return command's STDOUT as return value.
 
     If command execution fails, then :exc:`ShellCommandError` exception is
@@ -25,11 +25,18 @@ def shell_exec(*args, input: bytes = None, fail_on_stderr: bool = False) -> byte
     :param fail_on_stderr:
         Flag telling to raise :exc:`ShellCommandError` when non empty STDERR is
         found, no matter what return code was.
+
+    :param env:
+        Additional environment variables to pass to the command being executed.
     """
+    if env is not None:
+        tmp = dict(os.environ)
+        tmp.update(env)
+        env = tmp
     args = tuple(x for x in args if x is not None)
     logger.debug("Running shell command: %r", args)
     p = subprocess.Popen(
-        args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE
+        args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, env=env
     )
     stdout, stderr = (x.strip() for x in p.communicate(input=input))
     if p.returncode != 0 or (fail_on_stderr and stderr):

@@ -38,8 +38,9 @@ class FileSystemReaderWriter(IFileSystemReaderWriter):
         if "./" in path:
             raise exc.RelativePathUsed(path)
 
-    def abspath(self, path: str) -> str:
-        path = _normalize_path(path)
+    def abspath(self, path: str = None) -> str:
+        if path is None:
+            return self._root_dir
         return self._abspath(path)
 
     def scan(self, exclude: Set[str] = None) -> Iterator[str]:
