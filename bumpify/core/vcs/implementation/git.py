@@ -1,12 +1,10 @@
 from typing import List
 
-from pydantic import Tag
-
 from bumpify import utils, exc
 from bumpify.core.filesystem.interface import IFileSystemReader
 from bumpify.core.vcs import exc as vcs_exc
 from bumpify.core.vcs.interface import IVcsConnector, IVcsReaderWriter
-from bumpify.core.vcs.objects import Commit
+from bumpify.core.vcs.objects import Commit, Tag
 
 
 def _shell_exec(root_dir: str, *args) -> bytes:
@@ -82,14 +80,14 @@ class GitVcsConnector(IVcsConnector):
         def tag(self, rev: str, name: str):
             try:
                 _shell_exec(self._root_dir, "git", "tag", name, rev)
-            except exc.ShellCommandError:
-                raise repo_exc.TagAlreadyExists(name, path=self._root_dir)
+            except exc.ShellCommandError as e:
+                raise vcs_exc.TagAlreadyExists(name, repository_root_dir=self._root_dir, original_exc=e)
 
         def branch(self, name: str):
             try:
                 _shell_exec(self._root_dir, "git", "branch", name)
-            except exc.ShellCommandError:
-                raise repo_exc.BranchAlreadyExists(name, path=self._root_dir)
+            except exc.ShellCommandError as e:
+                raise vcs_exc.BranchAlreadyExists(name, repository_root_dir=self._root_dir, original_exc=e)
 
         def checkout(self, rev_or_name: str):
             _shell_exec(self._root_dir, "git", "checkout", rev_or_name)
@@ -140,7 +138,7 @@ class GitVcsConnector(IVcsConnector):
             parts = stdout.split("\n\n")
             return parts[-1].splitlines()
 
-        def list_reachable_tags(self, rev: str = None) -> List[Tag]:
+        def list_merged_tags(self, rev: str = None) -> List[Tag]:
             try:
                 stdout = _shell_exec(
                     self._root_dir,
@@ -148,7 +146,7 @@ class GitVcsConnector(IVcsConnector):
                     "tag",
                     "-l",
                     "--sort=creatordate",
-                    "--format=%(objectname)\t%(refname:short)\t%(creatordate:iso)",
+                    "--format=%(objectname)\t%(refname:strip=2)\t%(creatordate:iso)",
                     "--merged",
                     rev or "HEAD",
                 )

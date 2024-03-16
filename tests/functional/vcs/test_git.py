@@ -37,7 +37,7 @@ class TestWithNonExistingRepository:
     def test_connect_fails_if_repository_does_not_exist(self):
         with pytest.raises(vcs_exc.RepositoryDoesNotExist) as excinfo:
             self.sut.connect()
-        assert excinfo.value.root_dir == self.tmpdir_fs.abspath()
+        assert excinfo.value.repository_root_dir == self.tmpdir_fs.abspath()
 
     def test_connect_returns_connection_object_if_repository_exists(self):
         self.sut.init()
@@ -55,17 +55,17 @@ class TestWithEmptyRepository:
     def test_current_branch_raises_no_commits_found(self):
         with pytest.raises(vcs_exc.NoCommitsFound) as excinfo:
             self.sut.current_branch()
-        assert excinfo.value.root_dir == self.tmpdir_fs.abspath()
+        assert excinfo.value.repository_root_dir == self.tmpdir_fs.abspath()
 
     def test_find_head_rev_raises_no_commits_found(self):
         with pytest.raises(vcs_exc.NoCommitsFound) as excinfo:
             self.sut.find_head_rev()
-        assert excinfo.value.root_dir == self.tmpdir_fs.abspath()
+        assert excinfo.value.repository_root_dir == self.tmpdir_fs.abspath()
 
     def test_find_initial_rev_raises_no_commits_found(self):
         with pytest.raises(vcs_exc.NoCommitsFound) as excinfo:
             self.sut.find_initial_rev()
-        assert excinfo.value.root_dir == self.tmpdir_fs.abspath()
+        assert excinfo.value.repository_root_dir == self.tmpdir_fs.abspath()
 
     def test_list_commits_returns_empty_list(self):
         assert self.sut.list_commits() == []
@@ -131,3 +131,67 @@ class TestWithInitialCommit:
     def test_list_committed_paths_returns_paths_that_were_modified_in_given_commit(self, committed_paths):
         paths = self.sut.list_committed_paths(self.initial_rev)
         assert set(paths) == set(committed_paths)
+
+    def test_list_reachable_tags_returns_empty_list_if_no_tags_are_found(self):
+        assert self.sut.list_merged_tags(self.initial_rev) == []
+
+    @pytest.mark.parametrize("tag_name", ["dummy"])
+    def test_list_merged_tags_for_head(self, tag_name):
+        self.sut.tag(self.initial_rev, tag_name)
+        tags = self.sut.list_merged_tags()
+        assert len(tags) == 1
+        assert tags[0].name == tag_name
+
+    @pytest.mark.parametrize("tag_name", ["dummy"])
+    def test_list_reachable_tags_returns_tag_if_it_exists_for_head(self, tag_name):
+        self.sut.tag(self.initial_rev, tag_name)
+        tags = self.sut.list_merged_tags(self.initial_rev)
+        assert len(tags) == 1
+        assert tags[0].name == tag_name
+
+    def test_if_invalid_rev_provided_then_list_reachable_tags_return_empty_list(self):
+        assert self.sut.list_merged_tags("not a valid ref") == []
+
+    @pytest.mark.parametrize("tag_name", ["dummy"])
+    def test_tag_cannot_be_created_twice(self, tag_name, tmpdir):
+        self.sut.tag(self.initial_rev, tag_name)
+        with pytest.raises(vcs_exc.TagAlreadyExists) as excinfo:
+            self.sut.tag(self.initial_rev, tag_name)
+        assert excinfo.value.repository_root_dir == str(tmpdir)
+        assert excinfo.value.tag_name == tag_name
+
+    def test_branch_cannot_be_created_twice(self, branch_name, tmpdir):
+        with pytest.raises(vcs_exc.BranchAlreadyExists) as excinfo:
+            self.sut.branch(branch_name)
+        assert excinfo.value.repository_root_dir == str(tmpdir)
+        assert excinfo.value.branch_name == branch_name
+
+
+class TestWithMultipleCommits:
+
+    @pytest.fixture
+    def commit_count(self):
+        return 10
+
+    @pytest.fixture(autouse=True)
+    def setup(self, connector: IVcsConnector, commit_count: int):
+        connector.init()
+        self.sut = connector.connect()
+        for i in range(commit_count):
+            self.sut.commit(f"chore: commit message #{i}", allow_empty=True)
+        self.all_commits = self.sut.list_commits()
+
+    def test_list_commits_with_start_rev_only(self):
+        commits = self.sut.list_commits(start_rev=self.all_commits[0].rev)
+        assert len(commits) == len(self.all_commits) - 1
+        assert commits == self.all_commits[1:]
+
+    def test_list_commits_with_end_rev_only(self):
+        commits = self.sut.list_commits(end_rev=self.all_commits[-2].rev)
+        assert len(commits) == len(self.all_commits) - 1
+        assert commits == self.all_commits[:-1]
+
+    def test_list_commits_with_both_start_and_end_revs(self):
+        commits = self.sut.list_commits(start_rev=self.all_commits[0].rev, end_rev=self.all_commits[-2].rev)
+        assert len(commits) == len(self.all_commits) - 2
+        assert commits == self.all_commits[1:-1]

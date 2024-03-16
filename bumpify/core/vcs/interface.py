@@ -49,7 +49,7 @@ class IVcsReader(abc.ABC):
         """
 
     @abc.abstractmethod
-    def list_reachable_tags(self, rev: str = None) -> typing.List[Tag]:
+    def list_merged_tags(self, rev: str = None) -> typing.List[Tag]:
         """List all tags reachable from given *rev* or ``HEAD`` if *rev* is
         omitted.
 
