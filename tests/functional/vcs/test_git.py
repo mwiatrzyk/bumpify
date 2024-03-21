@@ -4,8 +4,8 @@ import pytest
 
 from bumpify.core.filesystem.interface import IFileSystemReaderWriter
 from bumpify.core.vcs import exc as vcs_exc
-from bumpify.core.vcs.interface import IVcsConnector, IVcsReaderWriter
 from bumpify.core.vcs.implementation.git import GitVcsConnector
+from bumpify.core.vcs.interface import IVcsConnector, IVcsReaderWriter
 
 
 @pytest.fixture
@@ -90,7 +90,14 @@ class TestWithInitialCommit:
         ]
 
     @pytest.fixture(autouse=True)
-    def setup(self, connector: IVcsConnector, tmpdir_fs: IFileSystemReaderWriter, branch_name, commit_message, committed_paths):
+    def setup(
+        self,
+        connector: IVcsConnector,
+        tmpdir_fs: IFileSystemReaderWriter,
+        branch_name,
+        commit_message,
+        committed_paths,
+    ):
         connector.init()
         self.sut = connector.connect()
         self.tmpdir_fs = tmpdir_fs
@@ -113,7 +120,7 @@ class TestWithInitialCommit:
     def test_list_commits_called_without_args_returns_one_commit(self, commit_message):
         commits = self.sut.list_commits()
         assert len(commits) == 1
-        commit, = commits
+        (commit,) = commits
         assert commit.rev == self.initial_rev
         assert commit.message == commit_message
 
@@ -128,7 +135,9 @@ class TestWithInitialCommit:
         assert len(commits) == 1
         assert self.sut.list_commits(end_rev=self.initial_rev) == commits
 
-    def test_list_committed_paths_returns_paths_that_were_modified_in_given_commit(self, committed_paths):
+    def test_list_committed_paths_returns_paths_that_were_modified_in_given_commit(
+        self, committed_paths
+    ):
         paths = self.sut.list_committed_paths(self.initial_rev)
         assert set(paths) == set(committed_paths)
 
@@ -192,6 +201,8 @@ class TestWithMultipleCommits:
         assert commits == self.all_commits[:-1]
 
     def test_list_commits_with_both_start_and_end_revs(self):
-        commits = self.sut.list_commits(start_rev=self.all_commits[0].rev, end_rev=self.all_commits[-2].rev)
+        commits = self.sut.list_commits(
+            start_rev=self.all_commits[0].rev, end_rev=self.all_commits[-2].rev
+        )
         assert len(commits) == len(self.all_commits) - 2
         assert commits == self.all_commits[1:-1]

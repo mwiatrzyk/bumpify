@@ -1,6 +1,6 @@
 from typing import List
 
-from bumpify import utils, exc
+from bumpify import exc, utils
 from bumpify.core.filesystem.interface import IFileSystemReader
 from bumpify.core.vcs import exc as vcs_exc
 from bumpify.core.vcs.interface import IVcsConnector, IVcsReaderWriter
@@ -9,7 +9,7 @@ from bumpify.core.vcs.objects import Commit, Tag
 
 def _shell_exec(root_dir: str, *args) -> bytes:
     with utils.cwd(root_dir):
-        return utils.shell_exec(*args, env={'LANG': 'en_GB'})
+        return utils.shell_exec(*args, env={"LANG": "en_GB"})
 
 
 class GitVcsConnector(IVcsConnector):
@@ -53,14 +53,18 @@ class GitVcsConnector(IVcsConnector):
 
         def _rev_list(self) -> List[str]:
             try:
-                stdout = _shell_exec(self._root_dir, "git", "rev-list", "--reverse", "HEAD").decode()
+                stdout = _shell_exec(
+                    self._root_dir, "git", "rev-list", "--reverse", "HEAD"
+                ).decode()
             except exc.ShellCommandError as e:
                 raise vcs_exc.NoCommitsFound(self._root_dir, original_exc=e)
             return stdout.split()
 
         def current_branch(self) -> str:
             try:
-                return _shell_exec(self._root_dir, "git", "rev-parse", "--abbrev-ref", "HEAD").decode()
+                return _shell_exec(
+                    self._root_dir, "git", "rev-parse", "--abbrev-ref", "HEAD"
+                ).decode()
             except exc.ShellCommandError as e:
                 raise vcs_exc.NoCommitsFound(self._root_dir, original_exc=e)
 
@@ -74,20 +78,31 @@ class GitVcsConnector(IVcsConnector):
             _shell_exec(self._root_dir, "git", "add", path, *more_paths)
 
         def commit(self, message: str, allow_empty: bool = False) -> str:
-            _shell_exec(self._root_dir, "git", "commit", "--allow-empty" if allow_empty else None, "-m", message)
+            _shell_exec(
+                self._root_dir,
+                "git",
+                "commit",
+                "--allow-empty" if allow_empty else None,
+                "-m",
+                message,
+            )
             return self.find_head_rev()
 
         def tag(self, rev: str, name: str):
             try:
                 _shell_exec(self._root_dir, "git", "tag", name, rev)
             except exc.ShellCommandError as e:
-                raise vcs_exc.TagAlreadyExists(name, repository_root_dir=self._root_dir, original_exc=e)
+                raise vcs_exc.TagAlreadyExists(
+                    name, repository_root_dir=self._root_dir, original_exc=e
+                )
 
         def branch(self, name: str):
             try:
                 _shell_exec(self._root_dir, "git", "branch", name)
             except exc.ShellCommandError as e:
-                raise vcs_exc.BranchAlreadyExists(name, repository_root_dir=self._root_dir, original_exc=e)
+                raise vcs_exc.BranchAlreadyExists(
+                    name, repository_root_dir=self._root_dir, original_exc=e
+                )
 
         def checkout(self, rev_or_name: str):
             _shell_exec(self._root_dir, "git", "checkout", rev_or_name)
@@ -200,5 +215,3 @@ class GitVcsConnector(IVcsConnector):
 
 #     def tag(self, rev: Revision, name: str):
 #         self._console.out.info(f"Would {self._bold('tag')} a commit at {self._bold(rev)} with name {self._bold(name)}")
-
-

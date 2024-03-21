@@ -1,11 +1,11 @@
 import abc
 
 
-class INotifier(abc.ABC):
-    """An interface for notifying user about operation progress, status etc.
+class IStatusListener(abc.ABC):
+    """An interface for receiving notifications from commands being executed.
 
-    This is very similar to logging, but it is meant to be used for testable
-    messages.
+    This is very similar to logging, but is meant to be easily testable and
+    pluggable depending on presence of various configuration options.
     """
 
     @abc.abstractmethod
@@ -29,14 +29,14 @@ class INotifier(abc.ABC):
         """Emit a critical error notification."""
 
 
-class INotifierFactory(abc.ABC):
-    """Factory interface for creating named notifiers.
+class IStatusListenerFactory(abc.ABC):
+    """Factory interface for creating named status listeners.
 
     Think of it as a named logger factory.
     """
 
     @abc.abstractmethod
-    def create_notifier(self, name: str) -> INotifier:
+    def create_status_listener(self, name: str) -> IStatusListener:
         """Create a named notifier.
 
         :param name:

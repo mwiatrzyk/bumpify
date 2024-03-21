@@ -11,7 +11,7 @@ from bumpify.core.filesystem.implementation import (
     FileSystemReaderWriter,
 )
 from bumpify.core.filesystem.interface import IFileSystemReaderWriter
-from bumpify.core.notifier.objects import Styled, StyledMultiline
+from bumpify.core.status.objects import Styled
 
 
 @pytest.fixture(
@@ -143,13 +143,15 @@ class TestDryRunFileSystemReaderWriterProxy:
     SUT = IFileSystemReaderWriter
 
     @pytest.fixture
-    def sut(self, filesystem_reader_writer_mock, notifier_mock):
-        return DryRunFileSystemReaderWriterProxy(filesystem_reader_writer_mock, notifier_mock)
+    def sut(self, filesystem_reader_writer_mock, status_listener_mock):
+        return DryRunFileSystemReaderWriterProxy(
+            filesystem_reader_writer_mock, status_listener_mock
+        )
 
     @pytest.fixture(autouse=True)
-    def setup(self, filesystem_reader_writer_mock, notifier_mock):
+    def setup(self, filesystem_reader_writer_mock, status_listener_mock):
         self.target_mock = filesystem_reader_writer_mock
-        self.notifier_mock = notifier_mock
+        self.notifier_mock = status_listener_mock
 
     @pytest.mark.parametrize(
         "args, result",
@@ -172,24 +174,24 @@ class TestDryRunFileSystemReaderWriterProxy:
                 b"spam",
                 (
                     "Would",
-                    Styled("overwrite", name="highlighted"),
+                    Styled("overwrite", bold=True),
                     "file at",
-                    Styled("dummy.txt", name="highlighted"),
-                    "and set it with following content:",
-                    StyledMultiline("spam", indent="  ", name="file-content"),
+                    Styled("dummy.txt", bold=True),
+                    "and set it with following content:\n",
+                    Styled("  spam", fg="blue"),
                 ),
             ),
             (
                 "dummy.txt",
                 False,
-                b"spam",
+                b"spam\nmore spam",
                 (
                     "Would",
-                    Styled("create", name="highlighted"),
+                    Styled("create", bold=True),
                     "file at",
-                    Styled("dummy.txt", name="highlighted"),
-                    "and set it with following content:",
-                    StyledMultiline("spam", indent="  ", name="file-content"),
+                    Styled("dummy.txt", bold=True),
+                    "and set it with following content:\n",
+                    Styled("  spam\n  more spam", fg="blue"),
                 ),
             ),
             (
@@ -198,11 +200,11 @@ class TestDryRunFileSystemReaderWriterProxy:
                 random.randbytes(128),
                 (
                     "Would",
-                    Styled("overwrite", name="highlighted"),
+                    Styled("overwrite", bold=True),
                     "file at",
-                    Styled("dummy.txt", name="highlighted"),
+                    Styled("dummy.txt", bold=True),
                     "and set it with content having",
-                    Styled("128 bytes", name="highlighted"),
+                    Styled("128 bytes", bold=True),
                     "in total",
                 ),
             ),
@@ -212,11 +214,11 @@ class TestDryRunFileSystemReaderWriterProxy:
                 random.randbytes(64),
                 (
                     "Would",
-                    Styled("create", name="highlighted"),
+                    Styled("create", bold=True),
                     "file at",
-                    Styled("dummy.txt", name="highlighted"),
+                    Styled("dummy.txt", bold=True),
                     "and set it with content having",
-                    Styled("64 bytes", name="highlighted"),
+                    Styled("64 bytes", bold=True),
                     "in total",
                 ),
             ),

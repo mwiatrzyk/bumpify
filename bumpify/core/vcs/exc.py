@@ -7,18 +7,20 @@ class VcsError(exc.BumpifyError):
     #: Repository root directory.
     repository_root_dir: str
 
-    def __init__(self, repository_root_dir: str, original_exc: Exception=None):
+    def __init__(self, repository_root_dir: str, original_exc: Exception = None):
         super().__init__(original_exc=original_exc)
         self.repository_root_dir = repository_root_dir
 
 
 class RepositoryDoesNotExist(VcsError):
     """Raised when repository is tried to be opened but it does not exist."""
+
     __message_template__ = "{self.repository_root_dir}"
 
 
 class NoCommitsFound(VcsError):
     """Raised when trying to read from a repository that does not have commits yet."""
+
     __message_template__ = "{self.repository_root_dir}"
 
 

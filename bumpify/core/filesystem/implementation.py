@@ -1,9 +1,10 @@
 import os
+import textwrap
 from typing import Iterator, Set
 
 from bumpify import utils
-from bumpify.core.notifier.interface import INotifier
-from bumpify.core.notifier.objects import Styled, StyledMultiline
+from bumpify.core.status.interface import IStatusListener
+from bumpify.core.status.objects import Styled
 
 from . import exc
 from .interface import IFileSystemReaderWriter, IFileSystemWriter
@@ -97,7 +98,7 @@ class DryRunFileSystemReaderWriterProxy(IFileSystemWriter):
         performed.
     """
 
-    def __init__(self, target: IFileSystemReaderWriter, notifier: INotifier):
+    def __init__(self, target: IFileSystemReaderWriter, notifier: IStatusListener):
         self._target = target
         self._notifier = notifier
         self._modified_paths = set()
@@ -113,10 +114,10 @@ class DryRunFileSystemReaderWriterProxy(IFileSystemWriter):
         self._modified_paths.clear()
 
     def write(self, path: str, content: bytes):
-        action = Styled("overwrite" if self._target.exists(path) else "create", name="highlighted")
+        action = Styled("overwrite" if self._target.exists(path) else "create", bold=True)
         path = _normalize_path(path)
         self._modified_paths.add(path)
-        path = Styled(path, name="highlighted")
+        path = Styled(path, bold=True)
         content = utils.try_decode(content)
         if isinstance(content, str):
             self._write_str(path, action, content)
@@ -124,13 +125,14 @@ class DryRunFileSystemReaderWriterProxy(IFileSystemWriter):
             self._write_bytes(path, action, content)
 
     def _write_str(self, path: str, action: str, content: str):
-        content = StyledMultiline(content, indent="  ", name="file-content")
+        content = textwrap.indent(content, "  ")
+        content = Styled(content, fg="blue")
         self._notifier.info(
-            "Would", action, "file at", path, "and set it with following content:", content
+            "Would", action, "file at", path, "and set it with following content:\n", content
         )
 
     def _write_bytes(self, path: str, action: str, content: bytes):
-        content_size_str = Styled(f"{len(content)} bytes", name="highlighted")
+        content_size_str = Styled(f"{len(content)} bytes", bold=True)
         self._notifier.info(
             "Would",
             action,

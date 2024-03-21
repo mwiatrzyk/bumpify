@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 T = typing.TypeVar("T")
 
 
-def shell_exec(*args, input: bytes = None, fail_on_stderr: bool = False, env: dict=None) -> bytes:
+def shell_exec(*args, input: bytes = None, fail_on_stderr: bool = False, env: dict = None) -> bytes:
     """Execute shell command and return command's STDOUT as return value.
 
     If command execution fails, then :exc:`ShellCommandError` exception is

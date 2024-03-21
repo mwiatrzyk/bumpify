@@ -4,7 +4,8 @@ from mockify.api import ABCMock, satisfied
 from bumpify.core.config.objects import Config, LoadedConfig, VCSConfig
 from bumpify.core.filesystem.implementation import FileSystemReaderWriter
 from bumpify.core.filesystem.interface import IFileSystemReaderWriter
-from bumpify.core.notifier.interface import INotifier
+from bumpify.core.status.interface import IStatusListener
+from bumpify.core.vcs.interface import IVcsReaderWriter
 
 
 @pytest.fixture
@@ -15,8 +16,15 @@ def filesystem_reader_writer_mock():
 
 
 @pytest.fixture
-def notifier_mock():
-    mock = ABCMock("notifier_mock", INotifier)
+def status_listener_mock():
+    mock = ABCMock("status_listener_mock", IStatusListener)
+    with satisfied(mock):
+        yield mock
+
+
+@pytest.fixture
+def vcs_reader_writer_mock():
+    mock = ABCMock("vcs_reader_writer_mock", IVcsReaderWriter)
     with satisfied(mock):
         yield mock
 
