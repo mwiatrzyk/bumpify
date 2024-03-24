@@ -1,6 +1,6 @@
 from typing import List
 
-from bumpify.core.semver.objects import VersionTag
+from bumpify.core.semver.objects import ConventionalCommit, VersionTag
 from bumpify.core.vcs.interface import IVcsReaderWriter
 
 from .interface import ISemVerApi
@@ -19,4 +19,12 @@ class SemVerApi(ISemVerApi):
             if maybe_version_tag:
                 result.append(maybe_version_tag)
         result.sort(key=lambda x: x.version)
+        return result
+
+    def list_conventional_commits(self, start_rev: str = None, end_rev: str = None) -> List[ConventionalCommit]:
+        result = []
+        for commit in self._vcs_reader_writer.list_commits(start_rev=start_rev, end_rev=end_rev):
+            maybe_conventional_commit = ConventionalCommit.from_commit(commit)
+            if maybe_conventional_commit:
+                result.append(maybe_conventional_commit)
         return result

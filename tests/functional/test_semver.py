@@ -3,17 +3,22 @@ from mockify.api import Return
 
 from bumpify.core.semver.implementation import SemVerApi
 from bumpify.core.semver.interface import ISemVerApi
-from bumpify.core.semver.objects import Version
-from bumpify.core.vcs.helpers import make_dummy_tag
+from bumpify.core.semver.objects import ConventionalCommitData, Version
+from bumpify.core.vcs.helpers import make_dummy_rev, make_dummy_tag, make_dummy_commit
 
 API = ISemVerApi
+
+
+@pytest.fixture
+def api(vcs_reader_writer_mock):
+    return SemVerApi(vcs_reader_writer_mock)
 
 
 class TestListMergedVersionTags:
 
     @pytest.fixture(autouse=True)
-    def setup(self, vcs_reader_writer_mock):
-        self.api = SemVerApi(vcs_reader_writer_mock)
+    def setup(self, api: API, vcs_reader_writer_mock):
+        self.api = api
         self.vcs_reader_writer_mock = vcs_reader_writer_mock
 
     def test_when_no_tags_found_then_empty_list_returned(self):
@@ -65,3 +70,30 @@ class TestListMergedVersionTags:
         self.vcs_reader_writer_mock.list_merged_tags.expect_call().will_once(Return(tags))
         version_tags = self.api.list_version_tags()
         assert [x.tag.name for x in version_tags] == expected_version_tags
+
+
+class TestListConventionalCommits:
+
+    @pytest.fixture(autouse=True)
+    def setup(self, api: API, vcs_reader_writer_mock):
+        self.api = api
+        self.vcs_reader_writer_mock = vcs_reader_writer_mock
+
+    @pytest.mark.parametrize('start_rev', [None, make_dummy_rev()])
+    @pytest.mark.parametrize('end_rev', [None, make_dummy_rev()])
+    def test_when_no_conventional_commits_found_then_empty_list_is_returned(self, start_rev, end_rev):
+        commits = [make_dummy_commit('non conventional change')]
+        self.vcs_reader_writer_mock.list_commits.expect_call(start_rev=start_rev, end_rev=end_rev).will_once(Return(commits))
+        conventional_commits = self.api.list_conventional_commits(start_rev, end_rev)
+        assert conventional_commits == []
+
+    @pytest.mark.parametrize('message, expected_conventional_commit_data', [
+        ('fix: a fix', ConventionalCommitData(type='fix', description='a fix')),
+    ])
+    def test_parse_conventional_commit(self, message, expected_conventional_commit_data):
+        commits = [make_dummy_commit(message)]
+        self.vcs_reader_writer_mock.list_commits.expect_call(start_rev=None, end_rev=None).will_once(Return(commits))
+        conventional_commits = self.api.list_conventional_commits()
+        assert len(conventional_commits) == 1
+        assert conventional_commits[0].commit == commits[0]
+        assert conventional_commits[0].data == expected_conventional_commit_data

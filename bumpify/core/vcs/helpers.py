@@ -2,7 +2,7 @@ import datetime
 import hashlib
 import uuid
 
-from .objects import Tag
+from .objects import Commit, Tag
 
 
 def make_dummy_rev(seed: str = None) -> str:
@@ -27,4 +27,28 @@ def make_dummy_tag(name: str, rev: str = None, created: datetime.datetime = None
         rev=rev or make_dummy_rev(),
         name=name,
         created=created or datetime.datetime.utcnow(),
+    )
+
+
+def make_dummy_commit(message: str, rev: str = None) -> Commit:
+    """Make dummy commit object.
+
+    Returns new instance of :class:`Commit` object and fills it with dummy
+    data. This is meant to be used as a helper for upper layer testing, when
+    commit object is needed.
+
+    :param message:
+        Commit message.
+
+    :param rev:
+        Commit revision.
+
+        Random revision will be used if not given.
+    """
+    return Commit(
+        rev=rev or make_dummy_rev(),
+        author="John Doe",
+        author_email="jd@example.com",
+        author_date=datetime.datetime.utcnow(),
+        message=message,
     )
