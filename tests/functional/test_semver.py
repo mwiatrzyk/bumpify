@@ -1,10 +1,16 @@
 import pytest
 from mockify.api import Return
 
-from bumpify.core.semver.helpers import make_dummy_version_tag
+from bumpify.core.semver.helpers import make_dummy_conventional_commit, make_dummy_version_tag
 from bumpify.core.semver.implementation import SemVerApi
 from bumpify.core.semver.interface import ISemVerApi
-from bumpify.core.semver.objects import ConventionalCommitData, Version
+from bumpify.core.semver.objects import (
+    ChangelogEntry,
+    ChangelogEntryData,
+    ConventionalCommitData,
+    Version,
+    VersionTag,
+)
 from bumpify.core.vcs.helpers import make_dummy_commit, make_dummy_rev, make_dummy_tag
 
 API = ISemVerApi
@@ -164,3 +170,123 @@ class TestLoadUnreleasedChanges:
         assert unreleased.commit == commits[0]
         assert unreleased.data.type == "test"
         assert unreleased.data.description == "a breaking test fix"
+
+
+class TestLoadChangelog:
+
+    @pytest.fixture(autouse=True)
+    def setup(self, api: API, vcs_reader_writer_mock):
+        self.api = api
+        self.vcs_reader_writer_mock = vcs_reader_writer_mock
+
+    def validate_initial_entry(self, entry: ChangelogEntry, expected_version_tag: VersionTag):
+        assert entry.version == expected_version_tag.version
+        assert entry.prev_version is None
+        assert entry.released == expected_version_tag.tag.created
+        assert entry.data is None
+
+    def validate_middle_entry(
+        self,
+        entry: ChangelogEntry,
+        expected_version_tag: VersionTag,
+        expected_prev_version_tag: VersionTag,
+        expected_data: ChangelogEntryData,
+    ):
+        assert entry.version == expected_version_tag.version
+        assert entry.prev_version == expected_prev_version_tag.version
+        assert entry.released == expected_version_tag.tag.created
+        assert entry.data == expected_data
+
+    def test_when_only_one_version_in_list_then_return_only_initial_version_in_changelog(self):
+        version_tags = [make_dummy_version_tag(Version.from_str("0.0.1"))]
+        changelog = self.api.load_changelog(version_tags)
+        assert changelog is not None
+        assert len(changelog.entries) == 1
+        initial = changelog.entries[0]
+        self.validate_initial_entry(initial, version_tags[0])
+
+    def test_when_two_version_tags_in_list_then_return_changelog_with_two_entries(self):
+        version_tags = [
+            make_dummy_version_tag(Version.from_str("0.0.1")),
+            make_dummy_version_tag(Version.from_str("0.0.2")),
+        ]
+        commits = [make_dummy_commit("fix: a fix")]
+        self.vcs_reader_writer_mock.list_commits.expect_call(
+            start_rev=version_tags[0].tag.rev, end_rev=version_tags[1].tag.rev
+        ).will_once(Return(commits))
+        changelog = self.api.load_changelog(version_tags)
+        assert changelog is not None
+        assert len(changelog.entries) == 2
+        first, second = changelog.entries
+        expected_second_data = ChangelogEntryData(
+            fixes=[
+                make_dummy_conventional_commit(
+                    "fix: a fix", rev=commits[0].rev, author_date=commits[0].author_date
+                )
+            ]
+        )
+        self.validate_initial_entry(first, version_tags[0])
+        self.validate_middle_entry(second, version_tags[1], version_tags[0], expected_second_data)
+
+    def test_when_three_version_tags_in_list_then_return_changelog_with_three_entries(self):
+        version_tags = [
+            make_dummy_version_tag(Version.from_str("0.0.1")),
+            make_dummy_version_tag(Version.from_str("0.0.2")),
+            make_dummy_version_tag(Version.from_str("0.0.3")),
+        ]
+        first_commits = [make_dummy_commit("fix: a fix")]
+        self.vcs_reader_writer_mock.list_commits.expect_call(
+            start_rev=version_tags[0].tag.rev, end_rev=version_tags[1].tag.rev
+        ).will_once(Return(first_commits))
+        second_commits = [
+            make_dummy_commit("fix: a fix"),
+            make_dummy_commit("feat: a feat"),
+        ]
+        self.vcs_reader_writer_mock.list_commits.expect_call(
+            start_rev=version_tags[1].tag.rev, end_rev=version_tags[2].tag.rev
+        ).will_once(Return(second_commits))
+        changelog = self.api.load_changelog(version_tags)
+        assert changelog is not None
+        assert len(changelog.entries) == 3
+        first, second, third = changelog.entries
+        expected_second_data = ChangelogEntryData(
+            fixes=[
+                make_dummy_conventional_commit(
+                    "fix: a fix", rev=first_commits[0].rev, author_date=first_commits[0].author_date
+                )
+            ]
+        )
+        expected_third_data = ChangelogEntryData(
+            fixes=[
+                make_dummy_conventional_commit(
+                    "fix: a fix",
+                    rev=second_commits[0].rev,
+                    author_date=second_commits[0].author_date,
+                )
+            ],
+            feats=[
+                make_dummy_conventional_commit(
+                    "feat: a feat",
+                    rev=second_commits[1].rev,
+                    author_date=second_commits[1].author_date,
+                )
+            ],
+        )
+        self.validate_initial_entry(first, version_tags[0])
+        self.validate_middle_entry(second, version_tags[1], version_tags[0], expected_second_data)
+        self.validate_middle_entry(third, version_tags[2], version_tags[1], expected_third_data)
+
+    def test_when_two_version_tags_in_list_but_no_conventional_commits_found_between_first_and_second_then_second_data_is_empty(self):
+        version_tags = [
+            make_dummy_version_tag(Version.from_str("0.0.1")),
+            make_dummy_version_tag(Version.from_str("0.0.2")),
+        ]
+        self.vcs_reader_writer_mock.list_commits.expect_call(
+            start_rev=version_tags[0].tag.rev, end_rev=version_tags[1].tag.rev
+        ).will_once(Return([]))
+        changelog = self.api.load_changelog(version_tags)
+        assert changelog is not None
+        assert len(changelog.entries) == 2
+        first, second = changelog.entries
+        self.validate_initial_entry(first, version_tags[0])
+        self.validate_middle_entry(second, version_tags[1], version_tags[0], None)

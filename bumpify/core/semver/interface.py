@@ -1,7 +1,7 @@
 import abc
 from typing import List, Optional
 
-from .objects import ChangelogEntryData, ConventionalCommit, VersionTag
+from .objects import Changelog, ChangelogEntryData, ConventionalCommit, VersionTag
 
 
 class ISemVerQueryApi(abc.ABC):
@@ -47,6 +47,20 @@ class ISemVerQueryApi(abc.ABC):
 
             This should be the most recent version tag to load unreleased
             changes that should go to a next version's changelog.
+        """
+
+    @abc.abstractmethod
+    def load_changelog(self, version_tags: List[VersionTag]) -> Changelog:
+        """Loads and builds changelog for given list of version tags.
+
+        :param version_tags:
+            List of version tags to load changelog for.
+
+            It is assumed that the list is in the right order, sorted ascending by
+            semantic version rules, and that the ordering is the same as it
+            would be if the tags were sorted by their creation date.
+
+            The list must not be empty.
         """
 
 

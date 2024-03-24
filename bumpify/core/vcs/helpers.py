@@ -30,7 +30,9 @@ def make_dummy_tag(name: str, rev: str = None, created: datetime.datetime = None
     )
 
 
-def make_dummy_commit(message: str, rev: str = None) -> Commit:
+def make_dummy_commit(
+    message: str, rev: str = None, author_date: datetime.datetime = None
+) -> Commit:
     """Make dummy commit object.
 
     Returns new instance of :class:`Commit` object and fills it with dummy
@@ -44,11 +46,16 @@ def make_dummy_commit(message: str, rev: str = None) -> Commit:
         Commit revision.
 
         Random revision will be used if not given.
+
+    :param author_date:
+        Author's date to use.
+
+        Current UTC datetime will be used if not given.
     """
     return Commit(
         rev=rev or make_dummy_rev(),
         author="John Doe",
         author_email="jd@example.com",
-        author_date=datetime.datetime.utcnow(),
+        author_date=author_date or datetime.datetime.utcnow(),
         message=message,
     )
