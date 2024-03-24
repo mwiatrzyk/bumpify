@@ -1,10 +1,11 @@
 import pytest
 from mockify.api import Return
 
+from bumpify.core.semver.helpers import make_dummy_version_tag
 from bumpify.core.semver.implementation import SemVerApi
 from bumpify.core.semver.interface import ISemVerApi
 from bumpify.core.semver.objects import ConventionalCommitData, Version
-from bumpify.core.vcs.helpers import make_dummy_rev, make_dummy_tag, make_dummy_commit
+from bumpify.core.vcs.helpers import make_dummy_commit, make_dummy_rev, make_dummy_tag
 
 API = ISemVerApi
 
@@ -79,21 +80,87 @@ class TestListConventionalCommits:
         self.api = api
         self.vcs_reader_writer_mock = vcs_reader_writer_mock
 
-    @pytest.mark.parametrize('start_rev', [None, make_dummy_rev()])
-    @pytest.mark.parametrize('end_rev', [None, make_dummy_rev()])
-    def test_when_no_conventional_commits_found_then_empty_list_is_returned(self, start_rev, end_rev):
-        commits = [make_dummy_commit('non conventional change')]
-        self.vcs_reader_writer_mock.list_commits.expect_call(start_rev=start_rev, end_rev=end_rev).will_once(Return(commits))
+    @pytest.mark.parametrize("start_rev", [None, make_dummy_rev()])
+    @pytest.mark.parametrize("end_rev", [None, make_dummy_rev()])
+    def test_when_no_conventional_commits_found_then_empty_list_is_returned(
+        self, start_rev, end_rev
+    ):
+        commits = [make_dummy_commit("non conventional change")]
+        self.vcs_reader_writer_mock.list_commits.expect_call(
+            start_rev=start_rev, end_rev=end_rev
+        ).will_once(Return(commits))
         conventional_commits = self.api.list_conventional_commits(start_rev, end_rev)
         assert conventional_commits == []
 
-    @pytest.mark.parametrize('message, expected_conventional_commit_data', [
-        ('fix: a fix', ConventionalCommitData(type='fix', description='a fix')),
-    ])
+    @pytest.mark.parametrize(
+        "message, expected_conventional_commit_data",
+        [
+            ("fix: a fix", ConventionalCommitData(type="fix", description="a fix")),
+        ],
+    )
     def test_parse_conventional_commit(self, message, expected_conventional_commit_data):
         commits = [make_dummy_commit(message)]
-        self.vcs_reader_writer_mock.list_commits.expect_call(start_rev=None, end_rev=None).will_once(Return(commits))
+        self.vcs_reader_writer_mock.list_commits.expect_call(
+            start_rev=None, end_rev=None
+        ).will_once(Return(commits))
         conventional_commits = self.api.list_conventional_commits()
         assert len(conventional_commits) == 1
         assert conventional_commits[0].commit == commits[0]
         assert conventional_commits[0].data == expected_conventional_commit_data
+
+
+class TestLoadUnreleasedChanges:
+
+    @pytest.fixture(autouse=True)
+    def setup(self, api: API, vcs_reader_writer_mock):
+        self.api = api
+        self.vcs_reader_writer_mock = vcs_reader_writer_mock
+        self.version_tag = make_dummy_version_tag(Version.from_str("1.0.0"))
+
+    def test_when_no_changes_made_since_last_version_tag_then_return_none(self):
+        self.vcs_reader_writer_mock.list_commits.expect_call(
+            start_rev=self.version_tag.tag.rev, end_rev=None
+        ).will_once(Return([]))
+        assert self.api.load_unreleased_changes(self.version_tag) is None
+
+    def test_parse_unreleased_fix(self):
+        commits = [make_dummy_commit("fix: a fix")]
+        self.vcs_reader_writer_mock.list_commits.expect_call(
+            start_rev=self.version_tag.tag.rev, end_rev=None
+        ).will_once(Return(commits))
+        unreleased_changes = self.api.load_unreleased_changes(self.version_tag)
+        assert unreleased_changes is not None
+        assert len(unreleased_changes.fixes) == 1
+        unreleased_fix = unreleased_changes.fixes[0]
+        assert unreleased_fix.commit == commits[0]
+        assert unreleased_fix.data.type == "fix"
+        assert unreleased_fix.data.description == "a fix"
+
+    def test_parse_unreleased_feature(self):
+        commits = [make_dummy_commit("feat: a feat")]
+        self.vcs_reader_writer_mock.list_commits.expect_call(
+            start_rev=self.version_tag.tag.rev, end_rev=None
+        ).will_once(Return(commits))
+        unreleased_changes = self.api.load_unreleased_changes(self.version_tag)
+        assert unreleased_changes is not None
+        assert len(unreleased_changes.feats) == 1
+        unreleased_feat = unreleased_changes.feats[0]
+        assert unreleased_feat.commit == commits[0]
+        assert unreleased_feat.data.type == "feat"
+        assert unreleased_feat.data.description == "a feat"
+
+    def test_parse_unreleased_other_breaking_change(self):
+        commits = [make_dummy_commit("test!: a breaking test fix")]
+        self.vcs_reader_writer_mock.list_commits.expect_call(
+            start_rev=self.version_tag.tag.rev, end_rev=None
+        ).will_once(Return(commits))
+        unreleased_changes = self.api.load_unreleased_changes(self.version_tag)
+        assert unreleased_changes is not None
+        assert len(unreleased_changes.others) == 1
+        assert len(unreleased_changes.others["test"]) == 1
+        assert len(unreleased_changes.breaking_changes) == 1
+        assert unreleased_changes.breaking_changes == ["a breaking test fix"]
+        unreleased = unreleased_changes.others["test"][0]
+        assert unreleased.commit == commits[0]
+        assert unreleased.data.type == "test"
+        assert unreleased.data.description == "a breaking test fix"

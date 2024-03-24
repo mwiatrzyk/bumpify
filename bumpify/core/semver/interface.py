@@ -17,7 +17,9 @@ class ISemVerQueryApi(abc.ABC):
         """
 
     @abc.abstractmethod
-    def list_conventional_commits(self, start_rev: str=None, end_rev: str=None) -> List[ConventionalCommit]:
+    def list_conventional_commits(
+        self, start_rev: str = None, end_rev: str = None
+    ) -> List[ConventionalCommit]:
         """Filter out conventional commits from list of commits.
 
         The meaning of the *start_rev* and *end_rev* parameters is the same as
@@ -30,6 +32,21 @@ class ISemVerQueryApi(abc.ABC):
 
         :param end_rev:
             See :meth:`IVcsReader.list_commits` method.
+        """
+
+    @abc.abstractmethod
+    def load_unreleased_changes(self, version_tag: VersionTag) -> Optional[ChangelogEntryData]:
+        """Load unreleased changes made between *version_tag* and current HEAD.
+
+        If no unreleased changes are found, then return ``None``. Otherwise
+        return new instance of :class:`ChangelogEntryData` that can later be
+        added to a changelog.
+
+        :param version_tag:
+            Version tag pointing to a commit to start search from (exclusive).
+
+            This should be the most recent version tag to load unreleased
+            changes that should go to a next version's changelog.
         """
 
 
