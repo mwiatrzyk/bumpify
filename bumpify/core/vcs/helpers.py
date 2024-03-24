@@ -1,5 +1,8 @@
+import datetime
 import hashlib
 import uuid
+
+from .objects import Tag
 
 
 def make_dummy_rev(seed: str = None) -> str:
@@ -16,3 +19,12 @@ def make_dummy_rev(seed: str = None) -> str:
     if seed is None:
         seed = str(uuid.uuid4())
     return hashlib.sha1(seed.encode()).hexdigest()
+
+
+def make_dummy_tag(name: str, rev: str = None, created: datetime.datetime = None) -> Tag:
+    """Make dummy tag object for testing purposes."""
+    return Tag(
+        rev=rev or make_dummy_rev(),
+        name=name,
+        created=created or datetime.datetime.utcnow(),
+    )

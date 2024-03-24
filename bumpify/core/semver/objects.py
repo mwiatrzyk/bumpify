@@ -73,7 +73,9 @@ class Version(BaseModel):
             out += f"+{self.buildmetadata}"
         return out
 
-    def bump(self, component: Component, prerelease: str = None, buildmetadata: str = None) -> "Version":
+    def bump(
+        self, component: Component, prerelease: str = None, buildmetadata: str = None
+    ) -> "Version":
         """Bump this version and create new version.
 
         :param component:
@@ -104,7 +106,11 @@ class Version(BaseModel):
                 )
             if component == Version.Component.MAJOR and (self.patch != 0 or self.minor != 0):
                 return Version(
-                    major=self.major + 1, minor=0, patch=0, prerelease=given_prerelease, buildmetadata=buildmetadata
+                    major=self.major + 1,
+                    minor=0,
+                    patch=0,
+                    prerelease=given_prerelease,
+                    buildmetadata=buildmetadata,
                 )
         if given_prerelease:
             if not new_prerelease:
@@ -133,11 +139,19 @@ class Version(BaseModel):
             return Version(major=self.major, minor=self.minor, patch=self.patch)
         if component == Version.Component.MAJOR:
             return Version(
-                major=self.major + 1, minor=0, patch=0, prerelease=new_prerelease, buildmetadata=buildmetadata
+                major=self.major + 1,
+                minor=0,
+                patch=0,
+                prerelease=new_prerelease,
+                buildmetadata=buildmetadata,
             )
         if component == Version.Component.MINOR:
             return Version(
-                major=self.major, minor=self.minor + 1, patch=0, prerelease=new_prerelease, buildmetadata=buildmetadata
+                major=self.major,
+                minor=self.minor + 1,
+                patch=0,
+                prerelease=new_prerelease,
+                buildmetadata=buildmetadata,
             )
         return Version(
             major=self.major,

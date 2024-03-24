@@ -10,11 +10,16 @@ class TestVersion:
             ("1.2.3", Version(major=1, minor=2, patch=3)),
             ("1.2.3-rc", Version(major=1, minor=2, patch=3, prerelease=["rc"])),
             ("1.2.3-rc.123", Version(major=1, minor=2, patch=3, prerelease=["rc", 123])),
-            ("1.2.3-rc.123+abc", Version(major=1, minor=2, patch=3, prerelease=["rc", 123], buildmetadata="abc")),
+            (
+                "1.2.3-rc.123+abc",
+                Version(major=1, minor=2, patch=3, prerelease=["rc", 123], buildmetadata="abc"),
+            ),
             ("1.2.3+abc", Version(major=1, minor=2, patch=3, buildmetadata="abc")),
         ],
     )
-    def test_parse_from_string_and_encode_to_string(self, version_str: str, expected_version: Version):
+    def test_parse_from_string_and_encode_to_string(
+        self, version_str: str, expected_version: Version
+    ):
         version = Version.from_str(version_str)
         assert version == expected_version
         assert version.to_str() == version_str
@@ -120,9 +125,12 @@ class TestVersion:
             ("4.0.0-beta", Version.Component.MAJOR, "beta", "4.0.0-beta.1"),
         ],
     )
-    def test_bump(self, version: str, component: Version.Component, prerelease: str, expected_result: str):
+    def test_bump(
+        self, version: str, component: Version.Component, prerelease: str, expected_result: str
+    ):
         assert (
-            Version.from_str(version).bump(component, prerelease=prerelease).to_str() == expected_result
+            Version.from_str(version).bump(component, prerelease=prerelease).to_str()
+            == expected_result
         )
 
     @pytest.mark.parametrize(
@@ -138,7 +146,12 @@ class TestVersion:
         ],
     )
     def test_when_bumping_with_metadata_that_metadata_is_added_to_created_version(
-        self, version: str, component: Version.Component, prerelease: str, buildmetadata: str, expected_result: str
+        self,
+        version: str,
+        component: Version.Component,
+        prerelease: str,
+        buildmetadata: str,
+        expected_result: str,
     ):
         assert (
             Version.from_str(version)
@@ -289,7 +302,9 @@ class TestConventionalCommitData:
         message: str,
         expected_conventional_commit_data: ConventionalCommitData,
     ):
-        assert ConventionalCommitData.from_commit_message(message) == expected_conventional_commit_data
+        assert (
+            ConventionalCommitData.from_commit_message(message) == expected_conventional_commit_data
+        )
 
     @pytest.mark.parametrize(
         "message, expected_conventional_commit_data",
@@ -309,7 +324,9 @@ class TestConventionalCommitData:
         message: str,
         expected_conventional_commit_data: ConventionalCommitData,
     ):
-        assert ConventionalCommitData.from_commit_message(message) == expected_conventional_commit_data
+        assert (
+            ConventionalCommitData.from_commit_message(message) == expected_conventional_commit_data
+        )
 
     @pytest.mark.parametrize(
         "invalid_message",
