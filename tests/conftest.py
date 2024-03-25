@@ -4,6 +4,7 @@ from mockify.api import ABCMock, satisfied
 from bumpify.core.config.objects import Config, LoadedConfig, VCSConfig
 from bumpify.core.filesystem.implementation import FileSystemReaderWriter
 from bumpify.core.filesystem.interface import IFileSystemReaderWriter
+from bumpify.core.semver.objects import SemVerConfig
 from bumpify.core.status.interface import IStatusListener
 from bumpify.core.vcs.interface import IVcsReaderWriter
 
@@ -52,3 +53,12 @@ def config_file_abspath(tmpdir_fs: IFileSystemReaderWriter, config_file_path):
 @pytest.fixture
 def tmpdir_fs(tmpdir):
     return FileSystemReaderWriter(tmpdir)
+
+
+@pytest.fixture
+def semver_config():
+    return SemVerConfig(
+        changelog_files=[
+            SemVerConfig.ChangelogFile(path="CHANGELOG.md"),
+        ]
+    )

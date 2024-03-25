@@ -1,8 +1,9 @@
 import datetime
+from typing import List
 
 from bumpify.core.vcs.helpers import make_dummy_commit, make_dummy_tag
 
-from .objects import ConventionalCommit, Version, VersionTag
+from .objects import ChangelogEntry, ChangelogEntryData, ConventionalCommit, Version, VersionTag
 
 
 def make_dummy_version_tag(version: Version, rev: str = None) -> VersionTag:

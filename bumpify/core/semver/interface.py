@@ -35,8 +35,9 @@ class ISemVerQueryApi(abc.ABC):
         """
 
     @abc.abstractmethod
-    def load_unreleased_changes(self, version_tag: VersionTag) -> Optional[ChangelogEntryData]:
-        """Load unreleased changes made between *version_tag* and current HEAD.
+    def fetch_unreleased_changes(self, version_tag: VersionTag) -> Optional[ChangelogEntryData]:
+        """Fetch unreleased changes made between *version_tag* (exclusive) and
+        current HEAD.
 
         If no unreleased changes are found, then return ``None``. Otherwise
         return new instance of :class:`ChangelogEntryData` that can later be
@@ -50,8 +51,8 @@ class ISemVerQueryApi(abc.ABC):
         """
 
     @abc.abstractmethod
-    def load_changelog(self, version_tags: List[VersionTag]) -> Changelog:
-        """Loads and builds changelog for given list of version tags.
+    def fetch_changelog(self, version_tags: List[VersionTag]) -> Changelog:
+        """Fetch changelog for given list of version tags.
 
         :param version_tags:
             List of version tags to load changelog for.
@@ -66,6 +67,16 @@ class ISemVerQueryApi(abc.ABC):
 
 class ISemVerCommandApi(abc.ABC):
     """Command API for semantic versioning."""
+
+    @abc.abstractmethod
+    def update_changelog_files(self, changelog: Changelog):
+        """Update all configured changelog files by encoding and writing
+        provided *changelog*.
+
+        :param changelog:
+            The changelog object to be used to replace current content of
+            changelog files.
+        """
 
 
 class ISemVerApi(ISemVerCommandApi, ISemVerQueryApi):

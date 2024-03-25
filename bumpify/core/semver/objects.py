@@ -10,6 +10,28 @@ from bumpify.core.vcs.objects import Commit, Tag
 from . import _constants, _parsing
 
 
+class SemVerConfig(BaseModel):
+    """Model to store semantic versioning configuration."""
+
+    class ChangelogFile(BaseModel):
+        """Model for storing configuration of a particular changelog file."""
+
+        #: Path to a changelog file.
+        #:
+        #: This is relative to project's root directory.
+        path: str
+
+        #: Changelog file encoding.
+        #:
+        #: By default, UTF-8 is used. This is needed because changelog files
+        #: are overwritten upon version bump and it is necessary to know what
+        #: encoding should be used.
+        encoding: str = "utf-8"
+
+    #: List of changelog files to be updated on version bump.
+    changelog_files: List[ChangelogFile] = [ChangelogFile(path="CHANGELOG.md")]
+
+
 class Version(BaseModel):
     """Semantic version data model."""
 
@@ -372,6 +394,24 @@ class ChangelogEntryData(BaseModel):
             self.feats.append(conventional_commit)
         elif conventional_commit.data.breaking_changes:
             self.others.setdefault(type_, []).append(conventional_commit)
+
+    @classmethod
+    def from_conventional_commit_list(
+        cls, conventional_commits: List[ConventionalCommit]
+    ) -> Optional["ChangelogEntryData"]:
+        """Helper factory method for creating new instance of
+        :class:`ChangelogEntryData` class directly from list of conventional
+        commits.
+
+        :param conventional_commits:
+            List of conventional commits to be parsed.
+        """
+        obj = cls()
+        for item in conventional_commits:
+            obj.update(item)
+        if obj.is_empty():
+            return None
+        return obj
 
 
 class ChangelogEntry(BaseModel):

@@ -1,13 +1,22 @@
+import datetime
+
 import pytest
 from mockify.api import Return
 
-from bumpify.core.semver.helpers import make_dummy_conventional_commit, make_dummy_version_tag
+from bumpify.core.filesystem.helpers import read_json
+from bumpify.core.filesystem.interface import IFileSystemReaderWriter
+from bumpify.core.semver.helpers import (
+    make_dummy_conventional_commit,
+    make_dummy_version_tag,
+)
 from bumpify.core.semver.implementation import SemVerApi
 from bumpify.core.semver.interface import ISemVerApi
 from bumpify.core.semver.objects import (
+    Changelog,
     ChangelogEntry,
     ChangelogEntryData,
     ConventionalCommitData,
+    SemVerConfig,
     Version,
     VersionTag,
 )
@@ -17,8 +26,8 @@ API = ISemVerApi
 
 
 @pytest.fixture
-def api(vcs_reader_writer_mock):
-    return SemVerApi(vcs_reader_writer_mock)
+def api(semver_config, tmpdir_fs, vcs_reader_writer_mock):
+    return SemVerApi(semver_config, tmpdir_fs, vcs_reader_writer_mock)
 
 
 class TestListMergedVersionTags:
@@ -115,7 +124,7 @@ class TestListConventionalCommits:
         assert conventional_commits[0].data == expected_conventional_commit_data
 
 
-class TestLoadUnreleasedChanges:
+class TestFetchUnreleasedChanges:
 
     @pytest.fixture(autouse=True)
     def setup(self, api: API, vcs_reader_writer_mock):
@@ -127,14 +136,14 @@ class TestLoadUnreleasedChanges:
         self.vcs_reader_writer_mock.list_commits.expect_call(
             start_rev=self.version_tag.tag.rev, end_rev=None
         ).will_once(Return([]))
-        assert self.api.load_unreleased_changes(self.version_tag) is None
+        assert self.api.fetch_unreleased_changes(self.version_tag) is None
 
     def test_parse_unreleased_fix(self):
         commits = [make_dummy_commit("fix: a fix")]
         self.vcs_reader_writer_mock.list_commits.expect_call(
             start_rev=self.version_tag.tag.rev, end_rev=None
         ).will_once(Return(commits))
-        unreleased_changes = self.api.load_unreleased_changes(self.version_tag)
+        unreleased_changes = self.api.fetch_unreleased_changes(self.version_tag)
         assert unreleased_changes is not None
         assert len(unreleased_changes.fixes) == 1
         unreleased_fix = unreleased_changes.fixes[0]
@@ -147,7 +156,7 @@ class TestLoadUnreleasedChanges:
         self.vcs_reader_writer_mock.list_commits.expect_call(
             start_rev=self.version_tag.tag.rev, end_rev=None
         ).will_once(Return(commits))
-        unreleased_changes = self.api.load_unreleased_changes(self.version_tag)
+        unreleased_changes = self.api.fetch_unreleased_changes(self.version_tag)
         assert unreleased_changes is not None
         assert len(unreleased_changes.feats) == 1
         unreleased_feat = unreleased_changes.feats[0]
@@ -160,7 +169,7 @@ class TestLoadUnreleasedChanges:
         self.vcs_reader_writer_mock.list_commits.expect_call(
             start_rev=self.version_tag.tag.rev, end_rev=None
         ).will_once(Return(commits))
-        unreleased_changes = self.api.load_unreleased_changes(self.version_tag)
+        unreleased_changes = self.api.fetch_unreleased_changes(self.version_tag)
         assert unreleased_changes is not None
         assert len(unreleased_changes.others) == 1
         assert len(unreleased_changes.others["test"]) == 1
@@ -172,7 +181,7 @@ class TestLoadUnreleasedChanges:
         assert unreleased.data.description == "a breaking test fix"
 
 
-class TestLoadChangelog:
+class TestFetchChangelog:
 
     @pytest.fixture(autouse=True)
     def setup(self, api: API, vcs_reader_writer_mock):
@@ -199,7 +208,7 @@ class TestLoadChangelog:
 
     def test_when_only_one_version_in_list_then_return_only_initial_version_in_changelog(self):
         version_tags = [make_dummy_version_tag(Version.from_str("0.0.1"))]
-        changelog = self.api.load_changelog(version_tags)
+        changelog = self.api.fetch_changelog(version_tags)
         assert changelog is not None
         assert len(changelog.entries) == 1
         initial = changelog.entries[0]
@@ -214,7 +223,7 @@ class TestLoadChangelog:
         self.vcs_reader_writer_mock.list_commits.expect_call(
             start_rev=version_tags[0].tag.rev, end_rev=version_tags[1].tag.rev
         ).will_once(Return(commits))
-        changelog = self.api.load_changelog(version_tags)
+        changelog = self.api.fetch_changelog(version_tags)
         assert changelog is not None
         assert len(changelog.entries) == 2
         first, second = changelog.entries
@@ -245,7 +254,7 @@ class TestLoadChangelog:
         self.vcs_reader_writer_mock.list_commits.expect_call(
             start_rev=version_tags[1].tag.rev, end_rev=version_tags[2].tag.rev
         ).will_once(Return(second_commits))
-        changelog = self.api.load_changelog(version_tags)
+        changelog = self.api.fetch_changelog(version_tags)
         assert changelog is not None
         assert len(changelog.entries) == 3
         first, second, third = changelog.entries
@@ -276,7 +285,9 @@ class TestLoadChangelog:
         self.validate_middle_entry(second, version_tags[1], version_tags[0], expected_second_data)
         self.validate_middle_entry(third, version_tags[2], version_tags[1], expected_third_data)
 
-    def test_when_two_version_tags_in_list_but_no_conventional_commits_found_between_first_and_second_then_second_data_is_empty(self):
+    def test_when_two_version_tags_in_list_but_no_conventional_commits_found_between_first_and_second_then_second_data_is_empty(
+        self,
+    ):
         version_tags = [
             make_dummy_version_tag(Version.from_str("0.0.1")),
             make_dummy_version_tag(Version.from_str("0.0.2")),
@@ -284,9 +295,138 @@ class TestLoadChangelog:
         self.vcs_reader_writer_mock.list_commits.expect_call(
             start_rev=version_tags[0].tag.rev, end_rev=version_tags[1].tag.rev
         ).will_once(Return([]))
-        changelog = self.api.load_changelog(version_tags)
+        changelog = self.api.fetch_changelog(version_tags)
         assert changelog is not None
         assert len(changelog.entries) == 2
         first, second = changelog.entries
         self.validate_initial_entry(first, version_tags[0])
         self.validate_middle_entry(second, version_tags[1], version_tags[0], None)
+
+
+class TestUpdateChangelogFiles:
+
+    @pytest.fixture
+    def changelog_json_path(self):
+        return "CHANGELOG.json"
+
+    class TestUpdateChangelogJsonFile:
+
+        @pytest.fixture
+        def semver_config(self, semver_config: SemVerConfig, changelog_json_path):
+            semver_config.changelog_files = [SemVerConfig.ChangelogFile(path=changelog_json_path)]
+            return semver_config
+
+        @pytest.fixture(autouse=True)
+        def setup(self, api: API, tmpdir_fs: IFileSystemReaderWriter, changelog_json_path: str):
+            self.api = api
+            self.tmpdir_fs = tmpdir_fs
+            self.changelog_json_path = changelog_json_path
+
+        @pytest.mark.parametrize(
+            "changelog, expected_json_data",
+            [
+                (Changelog(), {"entries": []}),
+                (
+                    Changelog(
+                        entries=[
+                            ChangelogEntry(
+                                version=Version.from_str("0.0.1"),
+                                released=datetime.datetime(1999, 1, 1),
+                            )
+                        ]
+                    ),
+                    {
+                        "entries": [
+                            {
+                                "released": "1999-01-01T00:00:00",
+                                "version": {
+                                    "major": 0,
+                                    "minor": 0,
+                                    "patch": 1,
+                                    "prerelease": [],
+                                },
+                            }
+                        ]
+                    },
+                ),
+                (
+                    Changelog(
+                        entries=[
+                            ChangelogEntry(
+                                version=Version.from_str("0.0.1"),
+                                released=datetime.datetime(1999, 1, 1),
+                            ),
+                            ChangelogEntry(
+                                version=Version.from_str("0.0.2"),
+                                prev_version=Version.from_str("0.0.1"),
+                                released=datetime.datetime(1999, 1, 2),
+                                data=ChangelogEntryData.from_conventional_commit_list(
+                                    [
+                                        make_dummy_conventional_commit(
+                                            "fix: a fix",
+                                            rev="abc",
+                                            author_date=datetime.datetime(1999, 1, 2),
+                                        )
+                                    ]
+                                ),
+                            ),
+                        ]
+                    ),
+                    {
+                        "entries": [
+                            {
+                                "released": "1999-01-01T00:00:00",
+                                "version": {
+                                    "major": 0,
+                                    "minor": 0,
+                                    "patch": 1,
+                                    "prerelease": [],
+                                },
+                            },
+                            {
+                                "released": "1999-01-02T00:00:00",
+                                "version": {
+                                    "major": 0,
+                                    "minor": 0,
+                                    "patch": 2,
+                                    "prerelease": [],
+                                },
+                                "prev_version": {
+                                    "major": 0,
+                                    "minor": 0,
+                                    "patch": 1,
+                                    "prerelease": [],
+                                },
+                                "data": {
+                                    "feats": [],
+                                    "fixes": [
+                                        {
+                                            "commit": {
+                                                "author": "John Doe",
+                                                "author_email": "jd@example.com",
+                                                "author_date": "1999-01-02T00:00:00",
+                                                "message": "fix: a fix",
+                                                "rev": "abc",
+                                            },
+                                            "data": {
+                                                "breaking_changes": [],
+                                                "description": "a fix",
+                                                "footers": {},
+                                                "type": "fix",
+                                            },
+                                        }
+                                    ],
+                                    "others": {},
+                                },
+                            },
+                        ]
+                    },
+                ),
+            ],
+        )
+        def test_when_update_changelog_called_then_changelog_file_is_created(
+            self, changelog, expected_json_data
+        ):
+            self.api.update_changelog_files(changelog)
+            assert self.tmpdir_fs.exists(self.changelog_json_path)
+            assert read_json(self.tmpdir_fs, self.changelog_json_path) == expected_json_data

@@ -1,9 +1,26 @@
 import io
+import json
 import typing
 
 import tomlkit
 
 from .interface import IFileSystemReader, IFileSystemWriter
+
+
+def read_json(fs: IFileSystemReader, path: str, encoding: str = "utf-8") -> dict:
+    """Read and decode a JSON file.
+
+    :param fs:
+        Filesystem reader to use.
+
+    :param path:
+        Path to a JSON file.
+
+    :param encoding:
+        Encoding to be used when file is decoded.
+    """
+    payload = fs.read(path).decode(encoding)
+    return json.loads(payload)
 
 
 def read_toml(fs: IFileSystemReader, path: str) -> tomlkit.TOMLDocument:

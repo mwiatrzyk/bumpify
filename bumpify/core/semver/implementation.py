@@ -1,5 +1,6 @@
 from typing import List, Optional
 
+from bumpify.core.filesystem.interface import IFileSystemReaderWriter
 from bumpify.core.semver.objects import (
     Changelog,
     ChangelogEntry,
@@ -9,13 +10,22 @@ from bumpify.core.semver.objects import (
 )
 from bumpify.core.vcs.interface import IVcsReaderWriter
 
+from . import _changelog_formatters
 from .interface import ISemVerApi
+from .objects import SemVerConfig
 
 
 class SemVerApi(ISemVerApi):
     """Default implementation of the semantic versioning API."""
 
-    def __init__(self, vcs_reader_writer: IVcsReaderWriter):
+    def __init__(
+        self,
+        semver_config: SemVerConfig,
+        filesystem_reader_writer: IFileSystemReaderWriter,
+        vcs_reader_writer: IVcsReaderWriter,
+    ):
+        self._semver_config = semver_config
+        self._filesystem_reader_writer = filesystem_reader_writer
         self._vcs_reader_writer = vcs_reader_writer
 
     def list_version_tags(self) -> List[VersionTag]:
@@ -37,7 +47,7 @@ class SemVerApi(ISemVerApi):
                 result.append(maybe_conventional_commit)
         return result
 
-    def load_unreleased_changes(self, version_tag: VersionTag) -> Optional[ChangelogEntryData]:
+    def fetch_unreleased_changes(self, version_tag: VersionTag) -> Optional[ChangelogEntryData]:
         conventional_commits = self.list_conventional_commits(start_rev=version_tag.tag.rev)
         if not conventional_commits:
             return None
@@ -46,7 +56,7 @@ class SemVerApi(ISemVerApi):
             result.update(item)
         return result
 
-    def load_changelog(self, version_tags: List[VersionTag]) -> Optional[Changelog]:
+    def fetch_changelog(self, version_tags: List[VersionTag]) -> Optional[Changelog]:
         result = Changelog()
         result.add_entry(
             ChangelogEntry(version=version_tags[0].version, released=version_tags[0].tag.created)
@@ -69,3 +79,11 @@ class SemVerApi(ISemVerApi):
             )
             prev_version_tag = version_tag
         return result
+
+    def update_changelog_files(self, changelog: Changelog):
+        for changelog_file in self._semver_config.changelog_files:
+            if changelog_file.path.endswith(".json"):
+                changelog_data = _changelog_formatters.format_as_json(changelog)
+            self._filesystem_reader_writer.write(
+                changelog_file.path, changelog_data.encode(changelog_file.encoding)
+            )
