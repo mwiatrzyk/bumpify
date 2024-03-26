@@ -84,6 +84,8 @@ class SemVerApi(ISemVerApi):
         for changelog_file in self._semver_config.changelog_files:
             if changelog_file.path.endswith(".json"):
                 changelog_data = _changelog_formatters.format_as_json(changelog)
+            elif changelog_file.path.endswith(".md"):
+                changelog_data = _changelog_formatters.format_as_markdown(changelog)
             self._filesystem_reader_writer.write(
                 changelog_file.path, changelog_data.encode(changelog_file.encoding)
             )

@@ -5,10 +5,7 @@ from mockify.api import Return
 
 from bumpify.core.filesystem.helpers import read_json
 from bumpify.core.filesystem.interface import IFileSystemReaderWriter
-from bumpify.core.semver.helpers import (
-    make_dummy_conventional_commit,
-    make_dummy_version_tag,
-)
+from bumpify.core.semver.helpers import make_dummy_conventional_commit, make_dummy_version_tag
 from bumpify.core.semver.implementation import SemVerApi
 from bumpify.core.semver.interface import ISemVerApi
 from bumpify.core.semver.objects import (
@@ -306,21 +303,21 @@ class TestFetchChangelog:
 class TestUpdateChangelogFiles:
 
     @pytest.fixture
-    def changelog_json_path(self):
-        return "CHANGELOG.json"
+    def semver_config(self, semver_config: SemVerConfig, changelog_file_path):
+        semver_config.changelog_files = [SemVerConfig.ChangelogFile(path=changelog_file_path)]
+        return semver_config
 
     class TestUpdateChangelogJsonFile:
 
         @pytest.fixture
-        def semver_config(self, semver_config: SemVerConfig, changelog_json_path):
-            semver_config.changelog_files = [SemVerConfig.ChangelogFile(path=changelog_json_path)]
-            return semver_config
+        def changelog_file_path(self):
+            return "CHANGELOG.json"
 
         @pytest.fixture(autouse=True)
-        def setup(self, api: API, tmpdir_fs: IFileSystemReaderWriter, changelog_json_path: str):
+        def setup(self, api: API, tmpdir_fs: IFileSystemReaderWriter, changelog_file_path: str):
             self.api = api
             self.tmpdir_fs = tmpdir_fs
-            self.changelog_json_path = changelog_json_path
+            self.changelog_json_path = changelog_file_path
 
         @pytest.mark.parametrize(
             "changelog, expected_json_data",
@@ -430,3 +427,90 @@ class TestUpdateChangelogFiles:
             self.api.update_changelog_files(changelog)
             assert self.tmpdir_fs.exists(self.changelog_json_path)
             assert read_json(self.tmpdir_fs, self.changelog_json_path) == expected_json_data
+
+    class TestUpdateChangelogMarkdownFile:
+
+        @pytest.fixture
+        def changelog_file_path(self):
+            return "CHANGELOG.md"
+
+        @pytest.fixture(autouse=True)
+        def setup(self, api: API, tmpdir_fs: IFileSystemReaderWriter, changelog_file_path: str):
+            self.api = api
+            self.tmpdir_fs = tmpdir_fs
+            self.changelog_markdown_path = changelog_file_path
+
+        @pytest.mark.parametrize(
+            "changelog, expected_content",
+            [
+                (Changelog(), ""),
+                (
+                    Changelog(
+                        entries=[
+                            ChangelogEntry(
+                                version=Version.from_str("0.0.1"),
+                                released=datetime.datetime(1999, 1, 1),
+                            )
+                        ]
+                    ),
+                    "## 0.0.1 (1999-01-01)\n\n" "Initial release.\n\n",
+                ),
+                (
+                    Changelog(
+                        entries=[
+                            ChangelogEntry(
+                                version=Version.from_str("0.0.1"),
+                                released=datetime.datetime(1999, 1, 1),
+                            ),
+                            ChangelogEntry(
+                                version=Version.from_str("0.0.2"),
+                                prev_version=Version.from_str("0.0.1"),
+                                released=datetime.datetime(1999, 1, 2),
+                                data=ChangelogEntryData.from_conventional_commit_list(
+                                    [
+                                        make_dummy_conventional_commit("fix: a fix"),
+                                        make_dummy_conventional_commit("feat: first feat"),
+                                        make_dummy_conventional_commit("feat: second feat"),
+                                        make_dummy_conventional_commit("test!: a breaking test"),
+                                        make_dummy_conventional_commit("chore: spam\n\nBREAKING CHANGE: another breaking change"),
+                                    ]
+                                ),
+                            ),
+                        ]
+                    ),
+                    "## 0.0.2 (1999-01-02)\n\n"
+                    "### BREAKING CHANGES\n\n"
+                    "- a breaking test\n"
+                    "- another breaking change\n\n"
+                    "### Fix\n\n"
+                    "- a fix\n\n"
+                    "### Feat\n\n"
+                    "- first feat\n"
+                    "- second feat\n\n"
+                    "## 0.0.1 (1999-01-01)\n\n"
+                    "Initial release.\n\n",
+                ),
+                (
+                    Changelog(
+                        entries=[
+                            ChangelogEntry(
+                                version=Version.from_str("0.0.1"),
+                                released=datetime.datetime(1999, 1, 1),
+                            ),
+                            ChangelogEntry(
+                                version=Version.from_str("0.0.2"),
+                                prev_version=Version.from_str("0.0.1"),
+                                released=datetime.datetime(1999, 1, 2),
+                            ),
+                        ]
+                    ),
+                    "## 0.0.2 (1999-01-02)\n\n"
+                    "## 0.0.1 (1999-01-01)\n\n"
+                    "Initial release.\n\n",
+                )
+            ],
+        )
+        def test_update_changelog_file(self, changelog, expected_content):
+            self.api.update_changelog_files(changelog)
+            content = self.tmpdir_fs.read(self.changelog_markdown_path).decode()
+            assert content == expected_content
