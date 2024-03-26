@@ -5,6 +5,7 @@ from mockify.api import Return
 
 from bumpify.core.filesystem.helpers import read_json
 from bumpify.core.filesystem.interface import IFileSystemReaderWriter
+from bumpify.core.semver.exc import UnsupportedChangelogFormat
 from bumpify.core.semver.helpers import make_dummy_conventional_commit, make_dummy_version_tag
 from bumpify.core.semver.implementation import SemVerApi
 from bumpify.core.semver.interface import ISemVerApi
@@ -306,6 +307,17 @@ class TestUpdateChangelogFiles:
     def semver_config(self, semver_config: SemVerConfig, changelog_file_path):
         semver_config.changelog_files = [SemVerConfig.ChangelogFile(path=changelog_file_path)]
         return semver_config
+
+    class TestUpdateUnsupportedChangelogFile:
+
+        @pytest.fixture
+        def changelog_file_path(self):
+            return "CHANGELOG.unsupported"
+
+        def test_when_unsupported_changelog_file_format_chosen_then_update_changelog_fails(self, api: API, changelog_file_path: str):
+            with pytest.raises(UnsupportedChangelogFormat) as excinfo:
+                api.update_changelog_files(Changelog())
+            assert excinfo.value.path == changelog_file_path
 
     class TestUpdateChangelogJsonFile:
 

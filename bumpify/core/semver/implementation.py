@@ -11,6 +11,7 @@ from bumpify.core.semver.objects import (
 from bumpify.core.vcs.interface import IVcsReaderWriter
 
 from . import _changelog_formatters
+from .exc import UnsupportedChangelogFormat
 from .interface import ISemVerApi
 from .objects import SemVerConfig
 
@@ -86,6 +87,8 @@ class SemVerApi(ISemVerApi):
                 changelog_data = _changelog_formatters.format_as_json(changelog)
             elif changelog_file.path.endswith(".md"):
                 changelog_data = _changelog_formatters.format_as_markdown(changelog)
+            else:
+                raise UnsupportedChangelogFormat(changelog_file.path)
             self._filesystem_reader_writer.write(
                 changelog_file.path, changelog_data.encode(changelog_file.encoding)
             )
