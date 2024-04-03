@@ -58,7 +58,12 @@ def tmpdir_fs(tmpdir):
 @pytest.fixture
 def semver_config():
     return SemVerConfig(
+        version_files=[
+            SemVerConfig.VersionFile(
+                path="pyproject.toml", prefix="version", section="[tool.poetry]"
+            )
+        ],
         changelog_files=[
             SemVerConfig.ChangelogFile(path="CHANGELOG.md"),
-        ]
+        ],
     )

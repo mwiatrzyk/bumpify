@@ -1,3 +1,5 @@
+import io
+import re
 from typing import List, Optional
 
 from bumpify.core.filesystem.interface import IFileSystemReaderWriter
@@ -6,12 +8,13 @@ from bumpify.core.semver.objects import (
     ChangelogEntry,
     ChangelogEntryData,
     ConventionalCommit,
+    Version,
     VersionTag,
 )
 from bumpify.core.vcs.interface import IVcsReaderWriter
 
-from . import _changelog_formatters
-from .exc import UnsupportedChangelogFormat
+from . import _changelog_formatters, _constants
+from .exc import UnsupportedChangelogFormat, VersionFileNotUpdated
 from .interface import ISemVerApi
 from .objects import SemVerConfig
 
@@ -92,3 +95,57 @@ class SemVerApi(ISemVerApi):
             self._filesystem_reader_writer.write(
                 changelog_file.path, changelog_data.encode(changelog_file.encoding)
             )
+
+    def update_version_files(self, version: Version):
+
+        class VersionFileUpdater:
+
+            def __init__(
+                self, version_file: SemVerConfig.VersionFile, version: Version, out: io.StringIO
+            ):
+                self._vf = version_file
+                self._version = version
+                self._out = out
+                if self._vf.prefix is not None:
+                    self._next_state = self._st_looking_by_prefix
+                else:
+                    self._next_state = self._st_looking_everywhere
+
+            def feed(self, line: str):
+                next_state = self._next_state(line)
+                self._next_state = next_state
+
+            def _repl(self, m):
+                return self._version.to_str()
+
+            def _st_looking_by_prefix(self, line: str):
+                if not line:
+                    raise VersionFileNotUpdated(self._vf.path, f"line prefix not found: {self._vf.prefix}")
+                if not line.lstrip().startswith(self._vf.prefix):
+                    self._out.write(line)
+                    return self._st_looking_by_prefix
+                new_line = re.sub(_constants.SEMVER_RE, self._repl, line)
+                self._out.write(new_line)
+                return self._st_done
+
+            def _st_looking_everywhere(self, line: str):
+                if not line:
+                    raise VersionFileNotUpdated(self._vf.path, "no semantic version string found")
+                new_line = re.sub(_constants.SEMVER_RE, self._repl, line)
+                self._out.write(new_line)
+                if new_line != line:
+                    return self._st_done
+                return self._st_looking_everywhere
+
+            def _st_done(self, line: str):
+                self._out.write(line)
+                return self._st_done
+
+        for vf in self._semver_config.version_files:
+            dest = io.StringIO()
+            updater = VersionFileUpdater(vf, version, dest)
+            initial_content = self._filesystem_reader_writer.read(vf.path).decode(vf.encoding)
+            for line in io.StringIO(initial_content):
+                updater.feed(line)
+            updater.feed("")
+            self._filesystem_reader_writer.write(vf.path, dest.getvalue().encode(vf.encoding))

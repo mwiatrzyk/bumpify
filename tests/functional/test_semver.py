@@ -5,7 +5,7 @@ from mockify.api import Return
 
 from bumpify.core.filesystem.helpers import read_json
 from bumpify.core.filesystem.interface import IFileSystemReaderWriter
-from bumpify.core.semver.exc import UnsupportedChangelogFormat
+from bumpify.core.semver.exc import UnsupportedChangelogFormat, VersionFileNotUpdated
 from bumpify.core.semver.helpers import make_dummy_conventional_commit, make_dummy_version_tag
 from bumpify.core.semver.implementation import SemVerApi
 from bumpify.core.semver.interface import ISemVerApi
@@ -314,7 +314,9 @@ class TestUpdateChangelogFiles:
         def changelog_file_path(self):
             return "CHANGELOG.unsupported"
 
-        def test_when_unsupported_changelog_file_format_chosen_then_update_changelog_fails(self, api: API, changelog_file_path: str):
+        def test_when_unsupported_changelog_file_format_chosen_then_update_changelog_fails(
+            self, api: API, changelog_file_path: str
+        ):
             with pytest.raises(UnsupportedChangelogFormat) as excinfo:
                 api.update_changelog_files(Changelog())
             assert excinfo.value.path == changelog_file_path
@@ -484,7 +486,9 @@ class TestUpdateChangelogFiles:
                                         make_dummy_conventional_commit("feat: first feat"),
                                         make_dummy_conventional_commit("feat: second feat"),
                                         make_dummy_conventional_commit("test!: a breaking test"),
-                                        make_dummy_conventional_commit("chore: spam\n\nBREAKING CHANGE: another breaking change"),
+                                        make_dummy_conventional_commit(
+                                            "chore: spam\n\nBREAKING CHANGE: another breaking change"
+                                        ),
                                     ]
                                 ),
                             ),
@@ -516,13 +520,167 @@ class TestUpdateChangelogFiles:
                             ),
                         ]
                     ),
-                    "## 0.0.2 (1999-01-02)\n\n"
-                    "## 0.0.1 (1999-01-01)\n\n"
-                    "Initial release.\n\n",
-                )
+                    "## 0.0.2 (1999-01-02)\n\n" "## 0.0.1 (1999-01-01)\n\n" "Initial release.\n\n",
+                ),
             ],
         )
         def test_update_changelog_file(self, changelog, expected_content):
             self.api.update_changelog_files(changelog)
             content = self.tmpdir_fs.read(self.changelog_markdown_path).decode()
             assert content == expected_content
+
+
+class TestUpdateVersionFiles:
+
+    @pytest.fixture
+    def semver_config(self, semver_config: SemVerConfig, version_file: SemVerConfig.VersionFile):
+        semver_config.version_files = [version_file]
+        return semver_config
+
+    @pytest.fixture(
+        params=[
+            ("0.0.1", "1.2.3"),
+        ]
+    )
+    def version_str_tuple(self, request):
+        return request.param
+
+    @pytest.fixture
+    def version_before_str(self, version_str_tuple: tuple):
+        return version_str_tuple[0]
+
+    @pytest.fixture
+    def version_after_str(self, version_str_tuple: tuple):
+        return version_str_tuple[1]
+
+    @staticmethod
+    def run_successful_substitution_test(self, version_before_str: str, version_after_str: str):
+        self.tmpdir_fs.write(
+            self.version_file_.path,
+            self.content_template_.format(version=version_before_str).encode(),
+        )
+        self.api.update_version_files(Version.from_str(version_after_str))
+        content_after = self.tmpdir_fs.read(self.version_file_.path).decode()
+        assert self.content_template_.format(version=version_after_str) == content_after
+
+    class TestWithPathOnly:
+
+        @pytest.fixture
+        def version_file(self):
+            return SemVerConfig.VersionFile(path="project/__init__.py")
+
+        @pytest.fixture(
+            params=[
+                '__version__ = "{version}"',
+                "\n".join(
+                    [
+                        'foo = "dummy"',
+                        "bar = 123",
+                        'baz = "{version}"',
+                    ]
+                ),
+                "\n".join(['one = "{version}"', 'two = "0.0.0"']),
+            ]
+        )
+        def content_template(self, request):
+            return request.param
+
+        @pytest.fixture(autouse=True)
+        def setup(
+            self,
+            api: API,
+            tmpdir_fs: IFileSystemReaderWriter,
+            version_file: SemVerConfig.VersionFile,
+            content_template: str,
+        ):
+            self.api = api
+            self.tmpdir_fs = tmpdir_fs
+            self.version_file_ = version_file
+            self.content_template_ = content_template
+
+        def test_substitute_only_first_found_version_string(
+            self, version_before_str: str, version_after_str: str
+        ):
+            TestUpdateVersionFiles.run_successful_substitution_test(
+                self, version_before_str, version_after_str
+            )
+
+        @pytest.mark.parametrize("content_template", [
+            "one = 123\ntwo = 456\nthree = \"spam\""
+        ])
+        def test_when_no_semver_matching_line_found_then_raise_exception(self, version_after_str: str):
+            self.tmpdir_fs.write(
+                self.version_file_.path,
+                self.content_template_.encode(),
+            )
+            with pytest.raises(VersionFileNotUpdated) as excinfo:
+                self.api.update_version_files(Version.from_str(version_after_str))
+            assert excinfo.value.reason == f"no semantic version string found"
+            assert excinfo.value.path == self.version_file_.path
+
+    class TestWithPrefixOnly:
+
+        @pytest.fixture
+        def version_file(self):
+            return SemVerConfig.VersionFile(path="project/__init__.py", prefix="three")
+
+        @pytest.fixture(
+            params=[
+                "\n".join(
+                    [
+                        'three = "{version}"',
+                        'one = "0.0.0"',
+                        'two = "0.0.0"',
+                    ]
+                ),
+                "\n".join(
+                    [
+                        'one = "0.0.0"',
+                        'three = "{version}"',
+                        'two = "0.0.0"',
+                    ]
+                ),
+                "\n".join(
+                    [
+                        'one = "0.0.0"',
+                        'two = "0.0.0"',
+                        'three = "{version}"',
+                    ]
+                ),
+            ]
+        )
+        def content_template(self, request):
+            return request.param
+
+        @pytest.fixture(autouse=True)
+        def setup(
+            self,
+            api: API,
+            tmpdir_fs: IFileSystemReaderWriter,
+            version_file: SemVerConfig.VersionFile,
+            content_template: str,
+        ):
+            self.api = api
+            self.tmpdir_fs = tmpdir_fs
+            self.version_file_ = version_file
+            self.content_template_ = content_template
+
+        def test_substitute_only_first_line_with_matching_prefix(
+            self, version_before_str: str, version_after_str: str
+        ):
+            TestUpdateVersionFiles.run_successful_substitution_test(
+                self, version_before_str, version_after_str
+            )
+
+        @pytest.mark.parametrize("content_template", [
+            "one = 123"
+        ])
+        def test_when_no_prefix_found_then_raise_exception(self, version_after_str: str):
+            self.tmpdir_fs.write(
+                self.version_file_.path,
+                self.content_template_.encode(),
+            )
+            with pytest.raises(VersionFileNotUpdated) as excinfo:
+                self.api.update_version_files(Version.from_str(version_after_str))
+            assert excinfo.value.reason == f"line prefix not found: {self.version_file_.prefix}"
+            assert excinfo.value.path == self.version_file_.path

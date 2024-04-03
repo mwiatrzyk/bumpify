@@ -1,7 +1,7 @@
 import abc
 from typing import List, Optional
 
-from .objects import Changelog, ChangelogEntryData, ConventionalCommit, VersionTag
+from .objects import Changelog, ChangelogEntryData, ConventionalCommit, Version, VersionTag
 
 
 class ISemVerQueryApi(abc.ABC):
@@ -76,6 +76,14 @@ class ISemVerCommandApi(abc.ABC):
         :param changelog:
             The changelog object to be used to replace current content of
             changelog files.
+        """
+
+    @abc.abstractmethod
+    def update_version_files(self, version: Version):
+        """Update version string in all configured version files.
+
+        :param version:
+            The version to be written.
         """
 
 

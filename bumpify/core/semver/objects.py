@@ -13,12 +13,41 @@ from . import _constants, _parsing
 class SemVerConfig(BaseModel):
     """Model to store semantic versioning configuration."""
 
+    class VersionFile(BaseModel):
+        """Version file configuration model."""
+
+        #: Path to a version file.
+        #:
+        #: This is relative to project's root directory.
+        path: str
+
+        #: Version line prefix.
+        #:
+        #: If given, then a line to be modified must first be prefixed with
+        #: given `prefix`. If no such line is found, or if found line does not
+        #: contain a valid SemVer string, then a file is considered "invalid".
+        prefix: Optional[str] = None
+
+        #: Version line section.
+        #:
+        #: Similar to :attr:`prefix`, but a lookup of a line to be modified is
+        #: performed only when line containing `section` is found and only for
+        #: lines that still remain. Can be used along with :attr:`prefix`; the
+        #: effects of both will then sum up for even more constrained result.
+        section: Optional[str] = None
+
+        #: Version file encoding.
+        #:
+        #: This is used to encode/decode file during writing/reading. Defaults to UTF-8.
+        encoding: str = "utf-8"
+
     class ChangelogFile(BaseModel):
-        """Model for storing configuration of a particular changelog file."""
+        """Changelog file configuration model."""
 
         #: Path to a changelog file.
         #:
-        #: This is relative to project's root directory.
+        #: The extension of a file given here determines the format of a
+        #: resulting changelog. The path is relative to project's root directory.
         path: str
 
         #: Changelog file encoding.
@@ -27,6 +56,13 @@ class SemVerConfig(BaseModel):
         #: are overwritten upon version bump and it is necessary to know what
         #: encoding should be used.
         encoding: str = "utf-8"
+
+    #: List of version files.
+    #:
+    #: Version files are special project's files that store current project's
+    #: version for various purposes. This configuration setting allows to
+    #: configure files that need to have version updated when version is bumped.
+    version_files: List[VersionFile]
 
     #: List of changelog files to be updated on version bump.
     changelog_files: List[ChangelogFile] = [ChangelogFile(path="CHANGELOG.md")]
