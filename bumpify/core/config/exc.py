@@ -9,6 +9,17 @@ class ConfigError(exc.BumpifyError):
     """Base class for configuration specific errors."""
 
 
+class ConfigFileNotFound(ConfigError):
+    """Raised when config file is expected to exist but it is missing."""
+
+    #: Absolute path to expected config file.
+    config_file_abspath: str
+
+    def __init__(self, config_file_abspath: str):
+        super().__init__()
+        self.config_file_abspath = config_file_abspath
+
+
 class ConfigParseError(ConfigError):
     """Raised when it was not possible to parse config file."""
 

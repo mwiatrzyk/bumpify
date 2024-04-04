@@ -4,13 +4,16 @@ import logging
 import os
 import subprocess
 import sys
-import typing
+
+from typing import Type, TypeVar, Sequence, Union
+
+from pydio.base import IInjector
 
 from . import exc
 
 logger = logging.getLogger(__name__)
 
-T = typing.TypeVar("T")
+T = TypeVar("T")
 
 
 def shell_exec(*args, input: bytes = None, fail_on_stderr: bool = False, env: dict = None) -> bytes:
@@ -55,7 +58,7 @@ def cwd(path: str):
         os.chdir(cwd)
 
 
-def try_decode(data: bytes, encodings: typing.Sequence[str] = None) -> typing.Union[str, bytes]:
+def try_decode(data: bytes, encodings: Sequence[str] = None) -> Union[str, bytes]:
     """Try to decode given *data* into string.
 
     If decoding is successful, then return decoded string.
@@ -99,3 +102,20 @@ def json_any(v):
 def json_dict(d: dict) -> dict:
     """Convert all values of dict *d* to JSON-compatible types."""
     return {k: json_any(v) for k, v in d.items()}
+
+
+def inject_type(injector: IInjector, type: Type[T]) -> T:
+    """Inject object of given *type* using provided *injector*.
+
+    This helper is basically used only to add type annotation to returned
+    value.
+
+    :param injector:
+        Injector object.
+
+    :param type:
+        Type object.
+
+        This acts as both the key for injector, and a type of returned value.
+    """
+    return injector.inject(type)
