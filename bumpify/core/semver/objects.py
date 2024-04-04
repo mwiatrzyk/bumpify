@@ -5,11 +5,13 @@ from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel
 
+from bumpify.core.config.objects import register_module_config
 from bumpify.core.vcs.objects import Commit, Tag
 
 from . import _constants, _parsing
 
 
+@register_module_config("semver")
 class SemVerConfig(BaseModel):
     """Model to store semantic versioning configuration."""
 

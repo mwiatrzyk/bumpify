@@ -12,6 +12,8 @@ class ConfigError(exc.BumpifyError):
 class ConfigFileNotFound(ConfigError):
     """Raised when config file is expected to exist but it is missing."""
 
+    __message_template__ = "{self.config_file_abspath}"
+
     #: Absolute path to expected config file.
     config_file_abspath: str
 
@@ -67,6 +69,8 @@ class ModuleConfigNotRegistered(ConfigError):
 
 class RequiredModuleConfigMissing(ConfigError):
     """Raised when required module configuration is missing."""
+
+    __message_template__ = "{self.model_type} (in config file: {self.config_file_abspath})"
 
     #: Absolute path to config file.
     config_file_abspath: str

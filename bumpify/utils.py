@@ -4,10 +4,11 @@ import logging
 import os
 import subprocess
 import sys
-
-from typing import Type, TypeVar, Sequence, Union
+from typing import Sequence, Type, TypeVar, Union
 
 from pydio.base import IInjector
+
+from bumpify.context import Context
 
 from . import exc
 
@@ -119,3 +120,12 @@ def inject_type(injector: IInjector, type: Type[T]) -> T:
         This acts as both the key for injector, and a type of returned value.
     """
     return injector.inject(type)
+
+
+def inject_context(injector: IInjector) -> Context:
+    """Injects context object.
+
+    :param injector:
+        The injector to use.
+    """
+    return inject_type(injector, Context)

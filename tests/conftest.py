@@ -1,6 +1,7 @@
 import pytest
 from mockify.api import ABCMock, satisfied
 
+from bumpify.core.config.implementation import ConfigReaderWriter
 from bumpify.core.config.interface import IConfigReaderWriter
 from bumpify.core.config.objects import Config, LoadedConfig, VCSConfig
 from bumpify.core.filesystem.implementation import FileSystemReaderWriter
@@ -61,6 +62,11 @@ def config_file_abspath(tmpdir_fs: IFileSystemReaderWriter, config_file_path):
 @pytest.fixture
 def tmpdir_fs(tmpdir):
     return FileSystemReaderWriter(tmpdir)
+
+
+@pytest.fixture
+def tmpdir_config(tmpdir_fs, config_file_path):
+    return ConfigReaderWriter(tmpdir_fs, config_file_path)
 
 
 @pytest.fixture

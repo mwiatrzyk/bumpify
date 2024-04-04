@@ -1,10 +1,9 @@
 import pytest
-
 from mockify.api import Return
 
 from bumpify.core.config import exc as config_exc
-from bumpify.core.config.objects import LoadedConfig
 from bumpify.core.config.helpers import require_config
+from bumpify.core.config.objects import LoadedConfig
 
 
 class TestRequireConfig:
