@@ -80,7 +80,7 @@ class ISemVerCommandApi(abc.ABC):
 
     @abc.abstractmethod
     def update_version_files(self, version: Version):
-        """Update version string in all configured version files.
+        """Update version in all configured version files.
 
         :param version:
             The version to be written.
