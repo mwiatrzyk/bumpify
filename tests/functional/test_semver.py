@@ -553,6 +553,26 @@ class TestUpdateVersionFiles:
     def version_after_str(self, version_str_tuple: tuple):
         return version_str_tuple[1]
 
+    @pytest.fixture
+    def version_after(self, version_after_str: str):
+        return Version.from_str(version_after_str)
+
+    @pytest.fixture(autouse=True)
+    def setup_and_teardown(
+        self,
+        tmpdir_fs: IFileSystemReaderWriter,
+        version_before_str: str,
+        version_after_str: str,
+        version_file: SemVerConfig.VersionFile,
+        content_template: str,
+    ):
+        tmpdir_fs.write(
+            version_file.path, content_template.format(version=version_before_str).encode()
+        )
+        yield
+        content_after = tmpdir_fs.read(version_file.path).decode()
+        assert content_template.format(version=version_after_str) == content_after
+
     @staticmethod
     def run_successful_substitution_test(self, version_before_str: str, version_after_str: str):
         self.tmpdir_fs.write(
@@ -585,38 +605,17 @@ class TestUpdateVersionFiles:
         def content_template(self, request):
             return request.param
 
-        @pytest.fixture(autouse=True)
-        def setup(
-            self,
-            api: API,
-            tmpdir_fs: IFileSystemReaderWriter,
-            version_file: SemVerConfig.VersionFile,
-            content_template: str,
-        ):
-            self.api = api
-            self.tmpdir_fs = tmpdir_fs
-            self.version_file_ = version_file
-            self.content_template_ = content_template
+        def test_substitute_only_first_found_version_string(self, api: API, version_after: Version):
+            api.update_version_files(version_after)
 
-        def test_substitute_only_first_found_version_string(
-            self, version_before_str: str, version_after_str: str
+        @pytest.mark.parametrize("content_template", ['one = 123\ntwo = 456\nthree = "spam"'])
+        def test_when_no_semver_matching_line_found_then_raise_exception(
+            self, api: API, version_after: Version, version_file: SemVerConfig.VersionFile
         ):
-            TestUpdateVersionFiles.run_successful_substitution_test(
-                self, version_before_str, version_after_str
-            )
-
-        @pytest.mark.parametrize("content_template", [
-            "one = 123\ntwo = 456\nthree = \"spam\""
-        ])
-        def test_when_no_semver_matching_line_found_then_raise_exception(self, version_after_str: str):
-            self.tmpdir_fs.write(
-                self.version_file_.path,
-                self.content_template_.encode(),
-            )
             with pytest.raises(VersionFileNotUpdated) as excinfo:
-                self.api.update_version_files(Version.from_str(version_after_str))
+                api.update_version_files(version_after)
             assert excinfo.value.reason == f"no semantic version string found"
-            assert excinfo.value.path == self.version_file_.path
+            assert excinfo.value.path == version_file.path
 
     class TestWithPrefixOnly:
 
@@ -652,35 +651,79 @@ class TestUpdateVersionFiles:
         def content_template(self, request):
             return request.param
 
-        @pytest.fixture(autouse=True)
-        def setup(
-            self,
-            api: API,
-            tmpdir_fs: IFileSystemReaderWriter,
-            version_file: SemVerConfig.VersionFile,
-            content_template: str,
-        ):
-            self.api = api
-            self.tmpdir_fs = tmpdir_fs
-            self.version_file_ = version_file
-            self.content_template_ = content_template
-
         def test_substitute_only_first_line_with_matching_prefix(
-            self, version_before_str: str, version_after_str: str
+            self, api: API, version_after: Version
         ):
-            TestUpdateVersionFiles.run_successful_substitution_test(
-                self, version_before_str, version_after_str
-            )
+            api.update_version_files(version_after)
 
-        @pytest.mark.parametrize("content_template", [
-            "one = 123"
-        ])
-        def test_when_no_prefix_found_then_raise_exception(self, version_after_str: str):
-            self.tmpdir_fs.write(
-                self.version_file_.path,
-                self.content_template_.encode(),
-            )
+        @pytest.mark.parametrize("content_template", ["one = 123"])
+        def test_when_no_prefix_found_then_raise_exception(
+            self, api: API, version_after: Version, version_file: SemVerConfig.VersionFile
+        ):
             with pytest.raises(VersionFileNotUpdated) as excinfo:
-                self.api.update_version_files(Version.from_str(version_after_str))
-            assert excinfo.value.reason == f"line prefix not found: {self.version_file_.prefix}"
-            assert excinfo.value.path == self.version_file_.path
+                api.update_version_files(version_after)
+            assert excinfo.value.reason == f"line prefix not found: {version_file.prefix}"
+            assert excinfo.value.path == version_file.path
+
+    class TestWithSectionOnly:
+
+        @pytest.fixture
+        def version_file(self):
+            return SemVerConfig.VersionFile(path="project/__init__.py", section="# dummy section")
+
+        @pytest.fixture(
+            params=[
+                "\n".join(
+                    [
+                        'one = "0.0.0"',
+                        'two = "0.0.0"',
+                        "# dummy section",
+                        'three = "{version}"',
+                    ]
+                ),
+            ]
+        )
+        def content_template(self, request):
+            return request.param
+
+        def test_substitute_only_first_line_with_semver_string_after_section_is_found(
+            self, api: API, version_after: Version
+        ):
+            api.update_version_files(version_after)
+
+        @pytest.mark.parametrize("content_template", ["one = 123"])
+        def test_when_section_not_found_then_exception_is_raised(
+            self, api: API, version_after: Version, version_file: SemVerConfig.VersionFile
+        ):
+            with pytest.raises(VersionFileNotUpdated) as excinfo:
+                api.update_version_files(version_after)
+            assert excinfo.value.reason == f"section not found: {version_file.section}"
+            assert excinfo.value.path == version_file.path
+
+    class TestWithSectionAndPrefix:
+
+        @pytest.fixture
+        def version_file(self):
+            return SemVerConfig.VersionFile(path="project/__init__.py", prefix="three", section="# dummy section")
+
+        @pytest.fixture(
+            params=[
+                "\n".join(
+                    [
+                        'zero = "0.0.0"',
+                        'three = "0.0.0"',
+                        "# dummy section",
+                        'one = "0.0.0"',
+                        'two = "0.0.0"',
+                        'three = "{version}"',
+                    ]
+                ),
+            ]
+        )
+        def content_template(self, request):
+            return request.param
+
+        def test_substitute_first_line_prefixed_with_given_prefix_and_only_if_section_is_found(
+            self, api: API, version_after: Version
+        ):
+            api.update_version_files(version_after)

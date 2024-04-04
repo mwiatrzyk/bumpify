@@ -19,16 +19,18 @@ class VersionFileUpdater:
         Output buffer where updated file content will be stored.
     """
 
-    def __init__(
-        self, version_file: SemVerConfig.VersionFile, version: Version, out: io.StringIO
-    ):
+    def __init__(self, version_file: SemVerConfig.VersionFile, version: Version, out: io.StringIO):
         self._vf = version_file
         self._version = version
         self._out = out
-        if self._vf.prefix is not None:
-            self._next_state = self._st_looking_by_prefix
+        if self._vf.prefix is not None and self._vf.section is not None:
+            self._next_state = self._st_section_lookup
+        elif self._vf.prefix is not None:
+            self._next_state = self._st_prefix_lookup
+        elif self._vf.section is not None:
+            self._next_state = self._st_section_lookup
         else:
-            self._next_state = self._st_looking_everywhere
+            self._next_state = self._st_semver_lookup
 
     def feed(self, line: str):
         """Feed the updater with a next line read from a version file.
@@ -39,30 +41,39 @@ class VersionFileUpdater:
         :param line:
             The line from a version file.
         """
-        next_state = self._next_state(line)
-        self._next_state = next_state
+        self._next_state = self._next_state(line)
 
     def _repl(self, m):
         return self._version.to_str()
 
-    def _st_looking_by_prefix(self, line: str):
+    def _st_section_lookup(self, line: str):
+        if not line:
+            raise VersionFileNotUpdated(self._vf.path, f"section not found: {self._vf.section}")
+        self._out.write(line)
+        if line.strip() == self._vf.section:
+            if self._vf.prefix is not None:
+                return self._st_prefix_lookup
+            return self._st_semver_lookup
+        return self._st_section_lookup
+
+    def _st_prefix_lookup(self, line: str):
         if not line:
             raise VersionFileNotUpdated(self._vf.path, f"line prefix not found: {self._vf.prefix}")
         if not line.lstrip().startswith(self._vf.prefix):
             self._out.write(line)
-            return self._st_looking_by_prefix
+            return self._st_prefix_lookup
         new_line = re.sub(_constants.SEMVER_RE, self._repl, line)
         self._out.write(new_line)
         return self._st_done
 
-    def _st_looking_everywhere(self, line: str):
+    def _st_semver_lookup(self, line: str):
         if not line:
             raise VersionFileNotUpdated(self._vf.path, "no semantic version string found")
         new_line = re.sub(_constants.SEMVER_RE, self._repl, line)
         self._out.write(new_line)
         if new_line != line:
             return self._st_done
-        return self._st_looking_everywhere
+        return self._st_semver_lookup
 
     def _st_done(self, line: str):
         self._out.write(line)
