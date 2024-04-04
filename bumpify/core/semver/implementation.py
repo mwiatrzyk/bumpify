@@ -1,5 +1,4 @@
 import io
-import re
 from typing import List, Optional
 
 from bumpify.core.filesystem.interface import IFileSystemReaderWriter

@@ -704,7 +704,9 @@ class TestUpdateVersionFiles:
 
         @pytest.fixture
         def version_file(self):
-            return SemVerConfig.VersionFile(path="project/__init__.py", prefix="three", section="# dummy section")
+            return SemVerConfig.VersionFile(
+                path="project/__init__.py", prefix="three", section="# dummy section"
+            )
 
         @pytest.fixture(
             params=[
