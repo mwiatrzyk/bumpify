@@ -26,12 +26,32 @@ class IInitCommand(abc.ABC):
         """Presenter interface for the :meth:`IInitCommand.init` method."""
 
         @abc.abstractmethod
-        def config_file_created(self, config_file_abspath: str):
-            """Called when config file was successfully created.
+        def notify_started(self, config_file_abspath: str):
+            """Should be called shortly after command is invoked and before
+            data is collected from the user.
+
+            Can be used to display welcome message.
 
             :param config_file_abspath:
-                Absolute path to created config file.
+                Absolute path to the config file that is about to be created.
             """
+
+        @abc.abstractmethod
+        def notify_skipped(self, config_file_abspath: str):
+            """Notify that initialization is skipped due to config file already
+            existing.
+
+            This informs the user that the project already is configured and
+            otherwise existing config would be replaced by initial one.
+
+            :param config_file_abspath:
+                Absolute path to the existing config file that otherwise would
+                be replaced.
+            """
+
+        @abc.abstractmethod
+        def notify_done(self):
+            """Called when config file was successfully created."""
 
     @abc.abstractmethod
     def init(self, provider: IInitProvider, presenter: IInitPresenter):

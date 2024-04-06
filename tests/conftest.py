@@ -1,3 +1,4 @@
+import colorama
 import pytest
 from mockify.api import ABCMock, satisfied
 
@@ -6,9 +7,11 @@ from bumpify.core.config.interface import IConfigReaderWriter
 from bumpify.core.config.objects import Config, LoadedConfig, VCSConfig
 from bumpify.core.filesystem.implementation import FileSystemReaderWriter
 from bumpify.core.filesystem.interface import IFileSystemReaderWriter
+from bumpify.core.notifier.interface import INotifier
 from bumpify.core.semver.objects import SemVerConfig
-from bumpify.core.status.interface import IStatusListener
 from bumpify.core.vcs.interface import IVcsReaderWriter
+
+colorama.init()
 
 
 @pytest.fixture
@@ -20,7 +23,7 @@ def filesystem_reader_writer_mock():
 
 @pytest.fixture
 def status_listener_mock():
-    mock = ABCMock("status_listener_mock", IStatusListener)
+    mock = ABCMock("status_listener_mock", INotifier)
     with satisfied(mock):
         yield mock
 
@@ -40,8 +43,24 @@ def config_reader_writer_mock():
 
 
 @pytest.fixture
-def config():
-    return Config(vcs=VCSConfig(type=VCSConfig.Type.GIT))
+def semver_config():
+    return SemVerConfig(
+        version_files=[
+            SemVerConfig.VersionFile(
+                path="pyproject.toml", prefix="version", section="[tool.poetry]"
+            )
+        ],
+        changelog_files=[
+            SemVerConfig.ChangelogFile(path="CHANGELOG.md"),
+        ],
+    )
+
+
+@pytest.fixture
+def config(semver_config):
+    config = Config(vcs=VCSConfig(type=VCSConfig.Type.GIT))
+    config.save_module_config(semver_config)
+    return config
 
 
 @pytest.fixture
@@ -67,17 +86,3 @@ def tmpdir_fs(tmpdir):
 @pytest.fixture
 def tmpdir_config(tmpdir_fs, config_file_path):
     return ConfigReaderWriter(tmpdir_fs, config_file_path)
-
-
-@pytest.fixture
-def semver_config():
-    return SemVerConfig(
-        version_files=[
-            SemVerConfig.VersionFile(
-                path="pyproject.toml", prefix="version", section="[tool.poetry]"
-            )
-        ],
-        changelog_files=[
-            SemVerConfig.ChangelogFile(path="CHANGELOG.md"),
-        ],
-    )

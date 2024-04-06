@@ -11,7 +11,7 @@ from bumpify.core.filesystem.implementation import (
     FileSystemReaderWriter,
 )
 from bumpify.core.filesystem.interface import IFileSystemReaderWriter
-from bumpify.core.status.objects import Styled
+from bumpify.core.notifier.objects import Styled
 
 
 @pytest.fixture(

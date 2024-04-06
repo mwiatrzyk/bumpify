@@ -1,12 +1,12 @@
-from bumpify.core.status.interface import IStatusListener
-from bumpify.core.status.objects import Styled
+from bumpify.core.notifier.interface import INotifier
+from bumpify.core.notifier.objects import Styled
 from bumpify.core.vcs.helpers import make_dummy_rev
 from bumpify.core.vcs.interface import IVcsReaderWriter, IVcsWriter
 
 
 class DryRunVcsReaderWriterProxy(IVcsWriter):
 
-    def __init__(self, target: IVcsReaderWriter, notifier: IStatusListener):
+    def __init__(self, target: IVcsReaderWriter, notifier: INotifier):
         self._target = target
         self._notifier = notifier
 

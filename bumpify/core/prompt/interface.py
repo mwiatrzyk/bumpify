@@ -18,5 +18,5 @@ class IPrompt(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def string(self, text: str, default: str=None, optional: bool=False) -> Optional[str]:
+    def string(self, text: str, default: str = None, optional: bool = False) -> Optional[str]:
         pass

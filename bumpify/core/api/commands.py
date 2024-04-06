@@ -11,9 +11,14 @@ class InitCommand(IInitCommand):
         self._config_reader_writer = config_reader_writer
 
     def init(self, provider: IInitCommand.IInitProvider, presenter: IInitCommand.IInitPresenter):
+        config_file_abspath = self._config_reader_writer.abspath()
+        if self._config_reader_writer.exists():
+            presenter.notify_skipped(config_file_abspath)
+            return
+        presenter.notify_started(config_file_abspath)
         config = provider.provide_config()
-        print(config)
-        return super().init(provider, presenter)
+        self._config_reader_writer.save(config)
+        presenter.notify_done()
 
 
 class BumpCommand(IBumpCommand):

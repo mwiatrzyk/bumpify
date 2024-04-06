@@ -1,7 +1,7 @@
 import pytest
 from mockify.api import Return
 
-from bumpify.core.status.objects import Styled
+from bumpify.core.notifier.objects import Styled
 from bumpify.core.vcs.helpers import make_dummy_rev
 from bumpify.core.vcs.implementation.proxy import DryRunVcsReaderWriterProxy
 from bumpify.core.vcs.interface import IVcsReaderWriter

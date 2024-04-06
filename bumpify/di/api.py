@@ -5,8 +5,10 @@ from bumpify.core.api.commands import BumpCommand, InitCommand
 from bumpify.core.api.interface import IBumpCommand, IInitCommand
 from bumpify.core.config.interface import IConfigReaderWriter
 from bumpify.core.config.objects import LoadedModuleConfig
+from bumpify.core.notifier.interface import INotifier
 from bumpify.core.prompt.interface import IPrompt
 from bumpify.core.semver.objects import SemVerConfig
+from bumpify.presenters.api import InitPresenter
 from bumpify.providers.api import InitProvider
 
 provider = Provider()
@@ -25,8 +27,9 @@ def make_init_provider(injector):
 
 
 @provider.provides(IInitCommand.IInitPresenter)
-def make_init_presenter():
-    pass
+def make_init_presenter(injector):
+    status_listener = utils.inject_type(injector, INotifier)
+    return InitPresenter(status_listener)
 
 
 @provider.provides(IBumpCommand)

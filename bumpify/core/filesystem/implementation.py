@@ -3,8 +3,8 @@ import textwrap
 from typing import Iterator, Set
 
 from bumpify import utils
-from bumpify.core.status.interface import IStatusListener
-from bumpify.core.status.objects import Styled
+from bumpify.core.notifier.interface import INotifier
+from bumpify.core.notifier.objects import Styled
 
 from . import exc
 from .interface import IFileSystemReaderWriter, IFileSystemWriter
@@ -98,7 +98,7 @@ class DryRunFileSystemReaderWriterProxy(IFileSystemWriter):
         performed.
     """
 
-    def __init__(self, target: IFileSystemReaderWriter, notifier: IStatusListener):
+    def __init__(self, target: IFileSystemReaderWriter, notifier: INotifier):
         self._target = target
         self._notifier = notifier
         self._modified_paths = set()

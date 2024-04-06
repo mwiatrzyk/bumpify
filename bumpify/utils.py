@@ -4,7 +4,7 @@ import logging
 import os
 import subprocess
 import sys
-from typing import Sequence, Type, TypeVar, Union
+from typing import Any, Sequence, Type, TypeVar, Union
 
 from pydio.base import IInjector
 
@@ -91,18 +91,58 @@ def debug(*values):
     print(*values, file=sys.stderr, flush=True)
 
 
-def json_any(v):
-    """Convert value *v* of any type to a closest JSON-compatible type."""
+def json_any(v: Any, exclude_none: bool = False) -> Any:
+    """Convert value *v* of any type to a closest JSON-compatible type.
+
+    :param v:
+        The value to be converted.
+
+    :param exclude_none:
+        Specify if ``None`` values should be excluded.
+
+        Applicable only if *v* is a dict object.
+    """
     if isinstance(v, dict):
-        return json_dict(v)
+        return json_dict(v, exclude_none=exclude_none)
+    if isinstance(v, list):
+        return json_list(v, exclude_none=exclude_none)
     if isinstance(v, enum.Enum):
         return v.value
     return v
 
 
-def json_dict(d: dict) -> dict:
-    """Convert all values of dict *d* to JSON-compatible types."""
-    return {k: json_any(v) for k, v in d.items()}
+def json_list(l: list, exclude_none: bool = False) -> list:
+    """Convert all *l* list items into JSON-compatible types and return new
+    list object.
+
+    :param l:
+        The list to be converted.
+
+    :param exclude_none:
+        Specify if ``None`` values should be excluded.
+
+        Applicable only for dict items.
+    """
+    return [json_any(x, exclude_none=exclude_none) for x in l]
+
+
+def json_dict(d: dict, exclude_none: bool = False) -> dict:
+    """Convert all values of dict *d* to JSON-compatible types and return new
+    dict object.
+
+    :param d:
+        The dict to be converted.
+
+    :param exclude_none:
+        Specify if ``None`` values should be excluded from resulting dict.
+    """
+    out = {}
+    for k, v in d.items():
+        v = json_any(v, exclude_none=exclude_none)
+        if exclude_none and v is None:
+            continue
+        out[k] = v
+    return out
 
 
 def inject_type(injector: IInjector, type: Type[T]) -> T:

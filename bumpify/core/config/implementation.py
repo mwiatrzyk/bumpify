@@ -65,7 +65,7 @@ class ConfigReaderWriter(IConfigReaderWriter):
 
     def save(self, config: Config):
         data = config.model_dump()
-        data = utils.json_dict(data)
+        data = utils.json_dict(data, exclude_none=True)
         data = tomlkit.dumps(data)
         self._filesystem_reader_writer.write(
             self._config_file_path, data.encode(self._config_file_encoding)

@@ -1,4 +1,5 @@
 from typing import List
+
 from bumpify.core.api.interface import IInitCommand
 from bumpify.core.config.objects import Config, VCSConfig
 from bumpify.core.prompt.interface import IPrompt
@@ -22,20 +23,24 @@ class InitProvider(IInitCommand.IInitProvider):
             self._prompt = prompt
 
         def provide(self) -> SemVerConfig:
-            return SemVerConfig(
-                version_files=self._provide_version_files()
-            )
+            return SemVerConfig(version_files=self._provide_version_files())
 
         def _provide_version_files(self) -> List[SemVerConfig.VersionFile]:
             out = []
             while True:
                 index = len(out) + 1
-                out.append(SemVerConfig.VersionFile(
-                    path=self._prompt.path(f"Version file #{index} path"),
-                    prefix=self._prompt.string(f"Version file #{index} prefix", optional=True),
-                    section=self._prompt.string(f"Version file #{index} section", optional=True),
-                    encoding=self._prompt.string(f"Version file #{index} encoding", default="utf-8"),
-                ))
+                out.append(
+                    SemVerConfig.VersionFile(
+                        path=self._prompt.path(f"Version file #{index} path"),
+                        prefix=self._prompt.string(f"Version file #{index} prefix", optional=True),
+                        section=self._prompt.string(
+                            f"Version file #{index} section", optional=True
+                        ),
+                        encoding=self._prompt.string(
+                            f"Version file #{index} encoding", default="utf-8"
+                        ),
+                    )
+                )
                 if not self._prompt.confirm(f"Add another version file?"):
                     break
             return out
@@ -46,9 +51,7 @@ class InitProvider(IInitCommand.IInitProvider):
             self._prompt = prompt
 
         def provide(self) -> VCSConfig:
-            return VCSConfig(
-                type=self._provide_type()
-            )
+            return VCSConfig(type=self._provide_type())
 
         def _provide_type(self) -> VCSConfig.Type:
             return self._prompt.enum("Choose project's repository type", VCSConfig.Type)
