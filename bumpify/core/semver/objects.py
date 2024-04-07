@@ -59,6 +59,16 @@ class SemVerConfig(BaseModel):
         #: encoding should be used.
         encoding: str = "utf-8"
 
+    #: Current version of a project.
+    #:
+    #: This will be used as initial version if no releases are made yet, or as
+    #: a current version if this is aligned with the most recent reachable version
+    #: tag. If version tags are present, then it is not allowed for the value
+    #: given here to precede most recent version tag (this will be verified
+    #: during bump). However, the version can manually be set to a higher value
+    #: to override default semantic version calculation based on VCS changes.
+    version: str = "0.0.1"
+
     #: List of version files.
     #:
     #: Version files are special project's files that store current project's

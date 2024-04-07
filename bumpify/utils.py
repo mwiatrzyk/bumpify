@@ -1,4 +1,5 @@
 import contextlib
+import datetime
 import enum
 import logging
 import os
@@ -7,6 +8,7 @@ import sys
 from typing import Any, Sequence, Type, TypeVar, Union
 
 from pydio.base import IInjector
+from pydio.keys import Variant
 
 from bumpify.context import Context
 
@@ -162,6 +164,22 @@ def inject_type(injector: IInjector, type: Type[T]) -> T:
     return injector.inject(type)
 
 
+def inject_variant(injector: IInjector, type: Type[T], **kwargs) -> T:
+    """Inject variation of given type according to *kwargs* given.
+
+    :param injector:
+        Injector object.
+
+
+    :param type:
+        Type object.
+
+    :param `**kwargs`:
+        Keyword arguments to choose implementation variant for a *type*.
+    """
+    return inject_type(injector, Variant(type, **kwargs))
+
+
 def inject_context(injector: IInjector) -> Context:
     """Injects context object.
 
@@ -169,3 +187,9 @@ def inject_context(injector: IInjector) -> Context:
         The injector to use.
     """
     return inject_type(injector, Context)
+
+
+def utcnow() -> datetime.datetime:
+    """Create current UTC non-naive datetime object."""
+    # TODO: Fix deprecation warning
+    return datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc)

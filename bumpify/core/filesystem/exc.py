@@ -8,6 +8,8 @@ class FileSystemError(exc.BumpifyError):
 class PathError(FileSystemError):
     """Base class for path-related errors."""
 
+    __message_template__ = "{self.path}"
+
     #: The path that caused error.
     path: str
 

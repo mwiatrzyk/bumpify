@@ -8,8 +8,10 @@ from bumpify import utils
 from bumpify.core.api.interface import IBumpCommand, IInitCommand
 from bumpify.core.config.interface import IConfigReaderWriter
 from bumpify.core.config.objects import Config
+from bumpify.core.filesystem.interface import IFileSystemReader, IFileSystemReaderWriter
 from bumpify.core.notifier.objects import Styled
 from bumpify.core.semver.objects import SemVerConfig
+from bumpify.core.vcs.interface import IVcsConnector
 from bumpify.di import provider
 from tests import helpers
 from tests.matchers import ReprEqual
@@ -161,6 +163,42 @@ class TestBumpCommand:
     def uut(self, injector):
         return utils.inject_type(injector, IBumpCommand)
 
+    @pytest.fixture(autouse=True)
+    def tmpdir_vcs_connector(self, tmpdir_vcs_connector: IVcsConnector):
+        tmpdir_vcs_connector.init()
+        return tmpdir_vcs_connector
+
+    @pytest.fixture(autouse=True)
+    def verify_version_files(
+        self,
+        tmpdir_fs: IFileSystemReaderWriter,
+        data_fs: IFileSystemReader,
+        semver_config: SemVerConfig,
+        expected_version_str: str,
+    ):
+        for vf in semver_config.version_files:
+            template = data_fs.read(f"templates/dummy-project/{vf.path}.txt").decode()
+            tmpdir_fs.write(vf.path, template.format(version="0.0.0").encode())
+        yield
+        for vf in semver_config.version_files:
+            expected_content = (
+                data_fs.read(f"templates/dummy-project/{vf.path}.txt")
+                .decode()
+                .format(version=expected_version_str)
+            )
+            assert tmpdir_fs.read(vf.path).decode() == expected_content
+
+    @pytest.fixture(autouse=True)
+    def verify_changelog_files(
+        self,
+        tmpdir_fs: IFileSystemReaderWriter,
+        semver_config: SemVerConfig,
+        expected_version_str: str,
+    ):
+        yield
+        for cf in semver_config.changelog_files:
+            assert expected_version_str in tmpdir_fs.read(cf.path).decode()
+
     @pytest.fixture
     def bump_presenter_mock(self):
         mock = ABCMock("bump_presenter_mock", IBumpCommand.IBumpPresenter)
@@ -172,6 +210,7 @@ class TestBumpCommand:
         tmpdir_config.save(config)
         return tmpdir_config
 
+    @pytest.mark.parametrize("expected_version_str", ["0.0.1"])
     def test_when_bump_invoked_for_a_first_time_then_initial_version_is_created(
         self, uut: UUT, bump_presenter_mock
     ):

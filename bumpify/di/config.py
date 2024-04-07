@@ -4,7 +4,7 @@ from bumpify import utils
 from bumpify.core.config import helpers as config_helpers
 from bumpify.core.config.implementation import ConfigReaderWriter
 from bumpify.core.config.interface import IConfigReaderWriter
-from bumpify.core.config.objects import LoadedConfig
+from bumpify.core.config.objects import Config, LoadedConfig
 from bumpify.core.filesystem.interface import IFileSystemReaderWriter
 
 provider = Provider()
@@ -20,6 +20,11 @@ def make_config_reader_writer(injector):
 
 
 @provider.provides(LoadedConfig)
-def make_config(injector):
+def make_loaded_config(injector):
     config_reader_writer = utils.inject_type(injector, IConfigReaderWriter)
     return config_helpers.require_config(config_reader_writer)
+
+
+@provider.provides(Config)
+def make_config(injector):
+    return utils.inject_type(injector, LoadedConfig).config

@@ -1,3 +1,5 @@
+import os
+
 import colorama
 import pytest
 from mockify.api import ABCMock, satisfied
@@ -9,7 +11,8 @@ from bumpify.core.filesystem.implementation import FileSystemReaderWriter
 from bumpify.core.filesystem.interface import IFileSystemReaderWriter
 from bumpify.core.notifier.interface import INotifier
 from bumpify.core.semver.objects import SemVerConfig
-from bumpify.core.vcs.interface import IVcsReaderWriter
+from bumpify.core.vcs.implementation.git import GitVcsConnector
+from bumpify.core.vcs.interface import IVcsConnector, IVcsReaderWriter
 
 colorama.init()
 
@@ -86,3 +89,19 @@ def tmpdir_fs(tmpdir):
 @pytest.fixture
 def tmpdir_config(tmpdir_fs, config_file_path):
     return ConfigReaderWriter(tmpdir_fs, config_file_path)
+
+
+@pytest.fixture
+def tmpdir_vcs_connector(tmpdir_fs):
+    return GitVcsConnector(tmpdir_fs)
+
+
+@pytest.fixture
+def tmpdir_vcs(tmpdir_vcs_connector: IVcsConnector):
+    return tmpdir_vcs_connector.connect()
+
+
+@pytest.fixture
+def data_fs():
+    tests_dir = os.path.abspath(os.path.dirname(__file__))
+    return FileSystemReaderWriter(os.path.join(tests_dir, "data"))

@@ -2,7 +2,7 @@ from pydio.api import Provider
 
 from bumpify import utils
 from bumpify.core.filesystem.implementation import FileSystemReaderWriter
-from bumpify.core.filesystem.interface import IFileSystemReaderWriter
+from bumpify.core.filesystem.interface import IFileSystemReader, IFileSystemReaderWriter
 
 provider = Provider()
 
@@ -11,3 +11,11 @@ provider = Provider()
 def make_filesystem_reader_writer(injector):
     context = utils.inject_context(injector)
     return FileSystemReaderWriter(context.project_root_dir)
+
+
+@provider.provides(IFileSystemReader)
+def make_filesystem_reader(injector):
+    # TODO: Currently this returns same object as for IFileSystemReaderWriter,
+    # but generally it would be good to wrap this with additional read-only
+    # proxy to avoid calling write methods from behind of read-only interface.
+    return utils.inject_type(injector, IFileSystemReaderWriter)

@@ -10,7 +10,7 @@ class SUT:
     def __init__(self, project_root_dir: str):
         self._project_root_dir = project_root_dir
 
-    def init(self, input: str=None, config_file_path: str = None) -> str:
+    def init(self, input: str = None, config_file_path: str = None) -> str:
         with utils.cwd(self._project_root_dir):
             return utils.shell_exec(
                 "bumpify",
@@ -37,7 +37,10 @@ def selected_version_file():
 
 
 def test_create_initial_config_file_at_default_location(
-    sut: SUT, tmpdir_fs: IFileSystemReaderWriter, selected_repository_type, selected_version_file: SemVerConfig.VersionFile
+    sut: SUT,
+    tmpdir_fs: IFileSystemReaderWriter,
+    selected_repository_type,
+    selected_version_file: SemVerConfig.VersionFile,
 ):
     input = (
         f"{selected_repository_type}\n"
@@ -49,12 +52,15 @@ def test_create_initial_config_file_at_default_location(
         "n\n"  # Do not add more version files
     )
     stdout = sut.init(input)
-    assert 'Done!' in stdout
+    assert "Done!" in stdout
     assert tmpdir_fs.exists(".bumpify.toml")
 
 
 def test_create_initial_config_file_at_provided_location(
-    sut: SUT, tmpdir_fs: IFileSystemReaderWriter, selected_repository_type, selected_version_file: SemVerConfig.VersionFile
+    sut: SUT,
+    tmpdir_fs: IFileSystemReaderWriter,
+    selected_repository_type,
+    selected_version_file: SemVerConfig.VersionFile,
 ):
     input = (
         f"{selected_repository_type}\n"
@@ -66,11 +72,13 @@ def test_create_initial_config_file_at_provided_location(
         "n\n"  # Do not add more version files
     )
     stdout = sut.init(input, config_file_path=".bumpify/config.toml")
-    assert 'Done!' in stdout
+    assert "Done!" in stdout
     assert tmpdir_fs.exists(".bumpify/config.toml")
 
 
-def test_when_file_already_exists_then_init_ends_with_warning(sut: SUT, tmpdir_fs: IFileSystemReaderWriter):
+def test_when_file_already_exists_then_init_ends_with_warning(
+    sut: SUT, tmpdir_fs: IFileSystemReaderWriter
+):
     tmpdir_fs.write(".bumpify.toml", b"")
-    stdout = sut.init('')
-    assert 'Config file already exists' in stdout
+    stdout = sut.init("")
+    assert "Config file already exists" in stdout
