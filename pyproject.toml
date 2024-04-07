@@ -12,6 +12,7 @@ click = "^8.1.7"
 pydio = "^0.4.1"
 pydantic = "^2.6.3"
 tomlkit = "^0.12.4"
+colorama = "^0.4.6"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0.2"

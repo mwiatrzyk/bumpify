@@ -244,7 +244,7 @@ python-versions = ">=3.8"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "f9b9e9a6351d3e35a0c1f1be95f405548af7980abd3f140d8d438d01fbfcbd60"
+content-hash = "7e47dd8fc035ce827836f3152f744ec6a47c85c8b1fb4df5769e674f922b6bfd"
 
 [metadata.files]
 annotated-types = [
