@@ -1,5 +1,4 @@
 import click
-import colorama
 import pytest
 from mockify.api import ABCMock, Mock, Return, ordered, patched, satisfied
 from mockify.matchers import Type
@@ -145,14 +144,13 @@ class TestInitCommand:
         config: Config,
         provider: IInitCommand.IInitProvider,
         presenter: IInitCommand.IInitPresenter,
-        capsys
+        capsys,
     ):
         tmpdir_config.save(config)
         uut.init(provider, presenter)
         captured = capsys.readouterr()
         assert captured.out == helpers.format_warning(
-            "Config file already exists:",
-            Styled(tmpdir_config.abspath(), bold=True)
+            "Config file already exists:", Styled(tmpdir_config.abspath(), bold=True)
         )
 
 
