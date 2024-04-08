@@ -193,3 +193,19 @@ def utcnow() -> datetime.datetime:
     """Create current UTC non-naive datetime object."""
     # TODO: Fix deprecation warning
     return datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc)
+
+
+def format_str(template: str, **params) -> str:
+    """Format string template.
+
+    This is used to convert built-in :exc:`KeyError` if formatting fails into a
+    more meaningful Bumpify specific error.
+
+    :param template:
+        Template string.
+
+    :param `**params`:
+        Template parameters.
+    """
+    # TODO: Wrap KeyError with custom exception
+    return template.format(**params)

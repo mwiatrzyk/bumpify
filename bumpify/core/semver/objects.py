@@ -79,6 +79,24 @@ class SemVerConfig(BaseModel):
     #: List of changelog files to be updated on version bump.
     changelog_files: List[ChangelogFile] = [ChangelogFile(path="CHANGELOG.md")]
 
+    #: Bump commit message template.
+    #:
+    #: Following template parameters are supported:
+    #:
+    #: {prev_version_str}
+    #:   Replaced with previous version string or `(null)` string if no
+    #:   previous version is available.
+    #:
+    #: {version_str}
+    #:   Replaced with new version.
+    bump_commit_message_template: str = "bump: {prev_version_str} -> {version_str}"
+
+    #: Version tag name template.
+    #:
+    #: Version tags are used to mark bump commits to allow later changelog
+    #: generation.
+    version_tag_name_template: str = "v{version_str}"
+
 
 class Version(BaseModel):
     """Semantic version data model."""

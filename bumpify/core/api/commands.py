@@ -49,9 +49,27 @@ class BumpCommand(IBumpCommand):
         self._semver_api.update_version_files(initial_version)
         self._create_bump_commit(initial_version)
 
-    def _create_bump_commit(self, version: Version):
+    def _create_bump_commit(self, version: Version, prev_version: Version = None):
+        version_str = version.to_str()
+        prev_version_str = prev_version.to_str() if prev_version else "(null)"
         self.__add_modified_paths_to_bump_commit()
+        bump_commit_rev = self.__create_bump_commit(version_str, prev_version_str)
+        self.__create_version_tag(bump_commit_rev, version_str)
 
     def __add_modified_paths_to_bump_commit(self):
         modified_paths = sorted(self._filesystem_reader_writer.modified_paths())
         self._vcs_reader_writer.add(*modified_paths)
+
+    def __create_bump_commit(self, version_str: str, prev_version_str: str) -> str:
+        bump_commit_message = utils.format_str(
+            self._semver_config.config.bump_commit_message_template,
+            version_str=version_str,
+            prev_version_str=prev_version_str,
+        )
+        return self._vcs_reader_writer.commit(bump_commit_message)
+
+    def __create_version_tag(self, bump_commit_rev: str, version_str: str):
+        version_tag_name = utils.format_str(
+            self._semver_config.config.version_tag_name_template, version_str=version_str
+        )
+        self._vcs_reader_writer.tag(bump_commit_rev, version_tag_name)
