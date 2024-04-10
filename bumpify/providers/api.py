@@ -1,9 +1,10 @@
+from email.policy import default
 from typing import List
 
 from bumpify.core.api.interface import IInitCommand
 from bumpify.core.config.objects import Config, VCSConfig
 from bumpify.core.prompt.interface import IPrompt
-from bumpify.core.semver.objects import SemVerConfig
+from bumpify.core.semver.objects import SemVerConfig, VersionComponent
 
 
 class InitProvider(IInitCommand.IInitProvider):
@@ -23,7 +24,27 @@ class InitProvider(IInitCommand.IInitProvider):
             self._prompt = prompt
 
         def provide(self) -> SemVerConfig:
-            return SemVerConfig(version_files=self._provide_version_files())
+            return SemVerConfig(
+                bump_rules=self._provide_bump_rules(),
+                version_files=self._provide_version_files()
+            )
+
+        def _provide_bump_rules(self) -> List[SemVerConfig.BumpRule]:
+            out = []
+            while True:
+                index = len(out) + 1
+                out.append(
+                    SemVerConfig.BumpRule(
+                        branch=self._prompt.string(f"Branch name/pattern for bump rule #{index}"),
+                        when_breaking=self._prompt.enum("Version component to bump on breaking change", VersionComponent, default=VersionComponent.MAJOR),
+                        when_feat=self._prompt.enum("Version component to bump on feature introduction", VersionComponent, default=VersionComponent.MINOR),
+                        when_fix=self._prompt.enum("Version component to bump on bug fix", VersionComponent, default=VersionComponent.PATCH),
+                        prerelease=self._prompt.string("Prerelease name", optional=True)
+                    )
+                )
+                if not self._prompt.confirm("Add another bump rule?"):
+                    break
+            return out
 
         def _provide_version_files(self) -> List[SemVerConfig.VersionFile]:
             out = []

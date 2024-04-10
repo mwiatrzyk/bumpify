@@ -46,7 +46,12 @@ def config_reader_writer_mock():
 
 
 @pytest.fixture
-def semver_config():
+def default_branch():
+    return "production"
+
+
+@pytest.fixture
+def semver_config(default_branch):
     return SemVerConfig(
         version_files=[
             SemVerConfig.VersionFile(
@@ -56,6 +61,9 @@ def semver_config():
         changelog_files=[
             SemVerConfig.ChangelogFile(path="CHANGELOG.md"),
         ],
+        bump_rules=[
+            SemVerConfig.BumpRule(branch=default_branch)
+        ]
     )
 
 

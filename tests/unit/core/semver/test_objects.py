@@ -1,6 +1,6 @@
 import pytest
 
-from bumpify.core.semver.objects import ConventionalCommitData, Version
+from bumpify.core.semver.objects import ConventionalCommitData, Version, VersionComponent
 
 
 class TestVersion:
@@ -89,44 +89,44 @@ class TestVersion:
     @pytest.mark.parametrize(
         "version, component, prerelease, expected_result",
         [
-            ("1.2.3", Version.Component.PATCH, None, "1.2.4"),
-            ("1.2.4", Version.Component.MINOR, None, "1.3.0"),
-            ("1.3.0", Version.Component.MAJOR, None, "2.0.0"),
-            ("2.0.0", Version.Component.PATCH, "alpha", "2.0.1-alpha"),
-            ("2.0.0", Version.Component.MINOR, "alpha", "2.1.0-alpha"),
-            ("2.0.0", Version.Component.MAJOR, "alpha", "3.0.0-alpha"),
-            ("3.0.0-alpha", Version.Component.PATCH, "alpha", "3.0.0-alpha.1"),
-            ("3.0.0-alpha", Version.Component.MINOR, "alpha", "3.0.0-alpha.1"),
-            ("3.0.0-alpha", Version.Component.MAJOR, "alpha", "3.0.0-alpha.1"),
-            ("3.0.0-alpha.1", Version.Component.PATCH, "alpha", "3.0.0-alpha.2"),
-            ("3.0.0-alpha.1", Version.Component.MINOR, "alpha", "3.0.0-alpha.2"),
-            ("3.0.0-alpha.1", Version.Component.MAJOR, "alpha", "3.0.0-alpha.2"),
-            ("3.0.0-alpha.2", Version.Component.PATCH, "beta", "3.0.0-beta"),
-            ("3.0.0-alpha.2", Version.Component.MINOR, "beta", "3.0.0-beta"),
-            ("3.0.0-alpha.2", Version.Component.MAJOR, "beta", "3.0.0-beta"),
-            ("3.0.0-beta", Version.Component.PATCH, "beta.rc", "3.0.0-beta.rc"),
-            ("3.0.0-beta", Version.Component.MINOR, "beta.rc", "3.0.0-beta.rc"),
-            ("3.0.0-beta", Version.Component.MAJOR, "beta.rc", "3.0.0-beta.rc"),
-            ("3.0.0-beta.rc", Version.Component.PATCH, "beta.rc", "3.0.0-beta.rc.1"),
-            ("3.0.0-beta.rc", Version.Component.MINOR, "beta.rc", "3.0.0-beta.rc.1"),
-            ("3.0.0-beta.rc", Version.Component.MAJOR, "beta.rc", "3.0.0-beta.rc.1"),
-            ("3.0.0-beta.rc.1", Version.Component.PATCH, "rc", "3.0.0-rc"),
-            ("3.0.0-rc", Version.Component.PATCH, None, "3.0.0"),
-            ("3.0.0-rc", Version.Component.MINOR, None, "3.0.0"),
-            ("3.0.0-rc", Version.Component.MAJOR, None, "3.0.0"),
-            ("3.0.0", Version.Component.PATCH, "alpha", "3.0.1-alpha"),
-            ("3.0.1-alpha", Version.Component.MINOR, "alpha", "3.1.0-alpha"),
-            ("3.0.1-alpha.1", Version.Component.MINOR, "alpha", "3.1.0-alpha"),
-            ("3.0.1-alpha.1", Version.Component.MINOR, "beta", "3.1.0-beta"),
-            ("3.0.1-alpha.1", Version.Component.MINOR, None, "3.1.0"),
-            ("3.0.1-alpha", Version.Component.MAJOR, "alpha", "4.0.0-alpha"),
-            ("3.1.0-alpha", Version.Component.MAJOR, "alpha", "4.0.0-alpha"),
-            ("3.1.0-alpha", Version.Component.MAJOR, "beta", "4.0.0-beta"),
-            ("4.0.0-beta", Version.Component.MAJOR, "beta", "4.0.0-beta.1"),
+            ("1.2.3", VersionComponent.PATCH, None, "1.2.4"),
+            ("1.2.4", VersionComponent.MINOR, None, "1.3.0"),
+            ("1.3.0", VersionComponent.MAJOR, None, "2.0.0"),
+            ("2.0.0", VersionComponent.PATCH, "alpha", "2.0.1-alpha"),
+            ("2.0.0", VersionComponent.MINOR, "alpha", "2.1.0-alpha"),
+            ("2.0.0", VersionComponent.MAJOR, "alpha", "3.0.0-alpha"),
+            ("3.0.0-alpha", VersionComponent.PATCH, "alpha", "3.0.0-alpha.1"),
+            ("3.0.0-alpha", VersionComponent.MINOR, "alpha", "3.0.0-alpha.1"),
+            ("3.0.0-alpha", VersionComponent.MAJOR, "alpha", "3.0.0-alpha.1"),
+            ("3.0.0-alpha.1", VersionComponent.PATCH, "alpha", "3.0.0-alpha.2"),
+            ("3.0.0-alpha.1", VersionComponent.MINOR, "alpha", "3.0.0-alpha.2"),
+            ("3.0.0-alpha.1", VersionComponent.MAJOR, "alpha", "3.0.0-alpha.2"),
+            ("3.0.0-alpha.2", VersionComponent.PATCH, "beta", "3.0.0-beta"),
+            ("3.0.0-alpha.2", VersionComponent.MINOR, "beta", "3.0.0-beta"),
+            ("3.0.0-alpha.2", VersionComponent.MAJOR, "beta", "3.0.0-beta"),
+            ("3.0.0-beta", VersionComponent.PATCH, "beta.rc", "3.0.0-beta.rc"),
+            ("3.0.0-beta", VersionComponent.MINOR, "beta.rc", "3.0.0-beta.rc"),
+            ("3.0.0-beta", VersionComponent.MAJOR, "beta.rc", "3.0.0-beta.rc"),
+            ("3.0.0-beta.rc", VersionComponent.PATCH, "beta.rc", "3.0.0-beta.rc.1"),
+            ("3.0.0-beta.rc", VersionComponent.MINOR, "beta.rc", "3.0.0-beta.rc.1"),
+            ("3.0.0-beta.rc", VersionComponent.MAJOR, "beta.rc", "3.0.0-beta.rc.1"),
+            ("3.0.0-beta.rc.1", VersionComponent.PATCH, "rc", "3.0.0-rc"),
+            ("3.0.0-rc", VersionComponent.PATCH, None, "3.0.0"),
+            ("3.0.0-rc", VersionComponent.MINOR, None, "3.0.0"),
+            ("3.0.0-rc", VersionComponent.MAJOR, None, "3.0.0"),
+            ("3.0.0", VersionComponent.PATCH, "alpha", "3.0.1-alpha"),
+            ("3.0.1-alpha", VersionComponent.MINOR, "alpha", "3.1.0-alpha"),
+            ("3.0.1-alpha.1", VersionComponent.MINOR, "alpha", "3.1.0-alpha"),
+            ("3.0.1-alpha.1", VersionComponent.MINOR, "beta", "3.1.0-beta"),
+            ("3.0.1-alpha.1", VersionComponent.MINOR, None, "3.1.0"),
+            ("3.0.1-alpha", VersionComponent.MAJOR, "alpha", "4.0.0-alpha"),
+            ("3.1.0-alpha", VersionComponent.MAJOR, "alpha", "4.0.0-alpha"),
+            ("3.1.0-alpha", VersionComponent.MAJOR, "beta", "4.0.0-beta"),
+            ("4.0.0-beta", VersionComponent.MAJOR, "beta", "4.0.0-beta.1"),
         ],
     )
     def test_bump(
-        self, version: str, component: Version.Component, prerelease: str, expected_result: str
+        self, version: str, component: VersionComponent, prerelease: str, expected_result: str
     ):
         assert (
             Version.from_str(version).bump(component, prerelease=prerelease).to_str()
@@ -136,19 +136,19 @@ class TestVersion:
     @pytest.mark.parametrize(
         "version, component, prerelease, buildmetadata, expected_result",
         [
-            ("1.0.0", Version.Component.PATCH, None, "abc", "1.0.1+abc"),
-            ("1.0.0", Version.Component.MINOR, None, "abc", "1.1.0+abc"),
-            ("1.0.0", Version.Component.MAJOR, None, "abc", "2.0.0+abc"),
-            ("1.0.0-rc", Version.Component.PATCH, "rc", "abc", "1.0.0-rc.1+abc"),
-            ("1.0.0-alpha", Version.Component.PATCH, "beta", "abc", "1.0.0-beta+abc"),
-            ("1.0.1-alpha", Version.Component.MINOR, "alpha", "abc", "1.1.0-alpha+abc"),
-            ("1.0.1-alpha", Version.Component.MAJOR, "alpha", "abc", "2.0.0-alpha+abc"),
+            ("1.0.0", VersionComponent.PATCH, None, "abc", "1.0.1+abc"),
+            ("1.0.0", VersionComponent.MINOR, None, "abc", "1.1.0+abc"),
+            ("1.0.0", VersionComponent.MAJOR, None, "abc", "2.0.0+abc"),
+            ("1.0.0-rc", VersionComponent.PATCH, "rc", "abc", "1.0.0-rc.1+abc"),
+            ("1.0.0-alpha", VersionComponent.PATCH, "beta", "abc", "1.0.0-beta+abc"),
+            ("1.0.1-alpha", VersionComponent.MINOR, "alpha", "abc", "1.1.0-alpha+abc"),
+            ("1.0.1-alpha", VersionComponent.MAJOR, "alpha", "abc", "2.0.0-alpha+abc"),
         ],
     )
     def test_when_bumping_with_metadata_that_metadata_is_added_to_created_version(
         self,
         version: str,
-        component: Version.Component,
+        component: VersionComponent,
         prerelease: str,
         buildmetadata: str,
         expected_result: str,

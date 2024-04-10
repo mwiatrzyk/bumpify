@@ -40,14 +40,36 @@ class BumpCommand(IBumpCommand):
         self._vcs_reader_writer = vcs_reader_writer
 
     def bump(self, presenter: IBumpCommand.IBumpPresenter):
+        # TODO: Also update version field in config
+        current_branch = self._vcs_reader_writer.current_branch()
+        bump_rule = self._semver_config.config.find_bump_rule(current_branch)
         self._filesystem_reader_writer.clear_modified_paths()
-        initial_version = Version.from_str(self._semver_config.config.version)
-        utcnow = utils.utcnow()
-        changelog = Changelog()
-        changelog.add_entry(ChangelogEntry(version=initial_version, released=utcnow))
+        version_tags = self._semver_api.list_version_tags()
+        if not version_tags:
+            initial_version = Version.from_str(self._semver_config.config.version)
+            utcnow = utils.utcnow()
+            changelog = Changelog()
+            changelog.add_entry(ChangelogEntry(version=initial_version, released=utcnow))
+            self._semver_api.update_changelog_files(changelog)
+            self._semver_api.update_version_files(initial_version)
+            self._create_bump_commit(initial_version)
+            return
+        unreleased_changes = self._semver_api.fetch_unreleased_changes(version_tags[-1])
+        changelog = self._semver_api.fetch_changelog(version_tags)
+        component = bump_rule.when_fix
+        prev_version = changelog.entries[-1].version
+        version = prev_version.bump(component, prerelease=bump_rule.prerelease)  # TODO: bump_rule.buildmetadata_template
+        changelog.add_entry(
+            ChangelogEntry(
+                version=version,
+                prev_version=prev_version,
+                released=utils.utcnow(),
+                data=unreleased_changes
+            )
+        )
         self._semver_api.update_changelog_files(changelog)
-        self._semver_api.update_version_files(initial_version)
-        self._create_bump_commit(initial_version)
+        self._semver_api.update_version_files(version)
+        self._create_bump_commit(version, prev_version=prev_version)
 
     def _create_bump_commit(self, version: Version, prev_version: Version = None):
         version_str = version.to_str()

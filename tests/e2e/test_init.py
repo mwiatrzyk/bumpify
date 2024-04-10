@@ -45,6 +45,10 @@ def test_create_initial_config_file_at_default_location(
     input = (
         f"{selected_repository_type}\n"
         "y\n"  # Create semantic versioning configuration
+        "prod\n"  # Bump rule #1 branch name
+        "\n\n\n"  # major, minor, patch - leave the defaults
+        "\n"  # Don't use prerelease
+        "n\n"  # Don't add more rules
         f"{selected_version_file.path}\n"  # Path to first version file
         f"{selected_version_file.prefix}\n"
         "\n"  # Skip version file section
@@ -65,6 +69,10 @@ def test_create_initial_config_file_at_provided_location(
     input = (
         f"{selected_repository_type}\n"
         "y\n"  # Create semantic versioning configuration
+        "prod\n"  # Bump rule #1 branch name
+        "\n\n\n"  # major, minor, patch - leave the defaults
+        "\n"  # Don't use prerelease
+        "n\n"  # Don't add more rules
         f"{selected_version_file.path}\n"  # Path to first version file
         f"{selected_version_file.prefix}\n"
         "\n"  # Skip version file section

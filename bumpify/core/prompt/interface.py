@@ -6,7 +6,7 @@ from typing import Any, List, Optional, Type
 class IPrompt(abc.ABC):
 
     @abc.abstractmethod
-    def enum(self, text: str, enum_type: Type[Enum]) -> Enum:
+    def enum(self, text: str, enum_type: Type[Enum], default: Enum=None) -> Enum:
         pass
 
     @abc.abstractmethod

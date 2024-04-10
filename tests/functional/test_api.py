@@ -79,13 +79,30 @@ class TestInitCommand:
         config_file_abspath,
         capsys,
     ):
+        version_components = click.Choice(['major', 'minor', 'patch'])
         optional_default = "leave empty to skip"
         click_mock.prompt.expect_call(
-            "Choose project's repository type", type=ReprEqual(click.Choice(["git"]))
+            "Choose project's repository type", type=ReprEqual(click.Choice(["git"])), default=None, show_default=False
         ).will_once(Return(selected_repository_type))
         click_mock.confirm.expect_call("Create semantic versioning configuration?").will_once(
             Return(True)
         )
+        click_mock.prompt.expect_call(
+            "Branch name/pattern for bump rule #1", default=None, type=str
+        ).will_once(Return("prod"))
+        click_mock.prompt.expect_call(
+            "Version component to bump on breaking change", type=ReprEqual(version_components), default='major', show_default=True
+        ).will_once(Return('major'))
+        click_mock.prompt.expect_call(
+            "Version component to bump on feature introduction", type=ReprEqual(version_components), default='minor', show_default=True
+        ).will_once(Return('minor'))
+        click_mock.prompt.expect_call(
+            "Version component to bump on bug fix", type=ReprEqual(version_components), default='patch', show_default=True
+        ).will_once(Return('patch'))
+        click_mock.prompt.expect_call(
+            "Prerelease name", default=optional_default, type=str
+        ).will_once(Return(optional_default))
+        click_mock.confirm.expect_call("Add another bump rule?").will_once(Return(False))
         click_mock.prompt.expect_call("Version file #1 path", type=Type(click.Path)).will_once(
             Return(selected_version_file_1["path"])
         )
@@ -164,8 +181,12 @@ class TestBumpCommand:
         return utils.inject_type(injector, IBumpCommand)
 
     @pytest.fixture(autouse=True)
-    def tmpdir_vcs_connector(self, tmpdir_vcs_connector: IVcsConnector):
+    def tmpdir_vcs_connector(self, tmpdir_vcs_connector: IVcsConnector, default_branch: str):
         tmpdir_vcs_connector.init()
+        connection = tmpdir_vcs_connector.connect()
+        connection.commit("chore: initial commit", allow_empty=True)
+        connection.branch(default_branch)
+        connection.checkout(default_branch)
         return tmpdir_vcs_connector
 
     @pytest.fixture(autouse=True)
@@ -238,4 +259,12 @@ class TestBumpCommand:
     def test_when_bump_invoked_for_a_first_time_then_initial_version_is_created(
         self, uut: UUT, bump_presenter_mock
     ):
+        uut.bump(bump_presenter_mock)
+
+    @pytest.mark.parametrize("commit_message, expected_version_str, expected_prev_version_str", [
+        ("fix: a fix", "0.0.2", "0.0.1"),
+    ])
+    def test_when_bump_invoked_for_a_second_time_then_another_version_is_created(self, uut: UUT, tmpdir_vcs: IVcsReaderWriter, bump_presenter_mock, commit_message):
+        uut.bump(bump_presenter_mock)
+        tmpdir_vcs.commit(commit_message, allow_empty=True)
         uut.bump(bump_presenter_mock)

@@ -1,6 +1,7 @@
 import dataclasses
 import datetime
 import enum
+import re
 from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel
@@ -9,6 +10,14 @@ from bumpify.core.config.objects import register_module_config
 from bumpify.core.vcs.objects import Commit, Tag
 
 from . import _constants, _parsing
+
+
+class VersionComponent(enum.Enum):
+    """Enumeration with version component names."""
+    # TODO: Add comparator: major > minor > patch
+    MAJOR = "major"
+    MINOR = "minor"
+    PATCH = "patch"
 
 
 @register_module_config("semver")
@@ -59,6 +68,27 @@ class SemVerConfig(BaseModel):
         #: encoding should be used.
         encoding: str = "utf-8"
 
+    class BumpRule(BaseModel):
+        """Bump rule model."""
+        # TODO: Add validator to check if when_breaking >= when_feat >= when_fix
+
+        #: Name or a regular expression pattern of a branch to use this rule for.
+        branch: str
+
+        #: Specify version component to bump on breaking change.
+        when_breaking: VersionComponent = VersionComponent.MAJOR
+
+        #: Specify version component to bump on new feature implementation.
+        when_feat: VersionComponent = VersionComponent.MINOR
+
+        #: Specify version component to bump on bug fix.
+        when_fix: VersionComponent = VersionComponent.PATCH
+
+        #: Prerelease name.
+        #:
+        #: When this is given, then a prerelease version will be created.
+        prerelease: Optional[str] = None
+
     #: Current version of a project.
     #:
     #: This will be used as initial version if no releases are made yet, or as
@@ -68,6 +98,13 @@ class SemVerConfig(BaseModel):
     #: during bump). However, the version can manually be set to a higher value
     #: to override default semantic version calculation based on VCS changes.
     version: str = "0.0.1"
+
+    #: Bump rules.
+    #:
+    #: This is used to configure for which branches version bumping should be
+    #: enabled and which version component should be bumped depending on the
+    #: severity of changes made.
+    bump_rules: List[BumpRule]
 
     #: List of version files.
     #:
@@ -97,20 +134,21 @@ class SemVerConfig(BaseModel):
     #: generation.
     version_tag_name_template: str = "v{version_str}"
 
+    def find_bump_rule(self, branch: str) -> Optional[BumpRule]:
+        """Find bump rule object for given branch name.
+
+        If no rule is found, then ``None`` is returned.
+
+        :param branch:
+            VCS repository branch name.
+        """
+        for rule in self.bump_rules:
+            if re.match(rule.branch, branch):
+                return rule
+
 
 class Version(BaseModel):
     """Semantic version data model."""
-
-    class Component(enum.Enum):
-        """Enumeration with version component.
-
-        Each value represents one semantic version component; either major,
-        minor or patch number.
-        """
-
-        MAJOR = "major"
-        MINOR = "minor"
-        PATCH = "patch"
 
     #: Major version number.
     major: int
@@ -162,7 +200,7 @@ class Version(BaseModel):
         return out
 
     def bump(
-        self, component: Component, prerelease: str = None, buildmetadata: str = None
+        self, component: VersionComponent, prerelease: str = None, buildmetadata: str = None
     ) -> "Version":
         """Bump this version and create new version.
 
@@ -184,7 +222,7 @@ class Version(BaseModel):
         new_prerelease = list(self.prerelease)
         given_prerelease = prerelease.split(".") if prerelease else []
         if new_prerelease:
-            if component == Version.Component.MINOR and self.patch != 0:
+            if component == VersionComponent.MINOR and self.patch != 0:
                 return Version(
                     major=self.major,
                     minor=self.minor + 1,
@@ -192,7 +230,7 @@ class Version(BaseModel):
                     prerelease=given_prerelease,
                     buildmetadata=buildmetadata,
                 )
-            if component == Version.Component.MAJOR and (self.patch != 0 or self.minor != 0):
+            if component == VersionComponent.MAJOR and (self.patch != 0 or self.minor != 0):
                 return Version(
                     major=self.major + 1,
                     minor=0,
@@ -225,7 +263,7 @@ class Version(BaseModel):
                 )
         elif new_prerelease:
             return Version(major=self.major, minor=self.minor, patch=self.patch)
-        if component == Version.Component.MAJOR:
+        if component == VersionComponent.MAJOR:
             return Version(
                 major=self.major + 1,
                 minor=0,
@@ -233,7 +271,7 @@ class Version(BaseModel):
                 prerelease=new_prerelease,
                 buildmetadata=buildmetadata,
             )
-        if component == Version.Component.MINOR:
+        if component == VersionComponent.MINOR:
             return Version(
                 major=self.major,
                 minor=self.minor + 1,
