@@ -1,6 +1,7 @@
 import abc
 
 from bumpify.core.config.objects import Config
+from bumpify.core.semver.objects import Version
 
 
 class IInitCommand(abc.ABC):
@@ -68,7 +69,18 @@ class IInitCommand(abc.ABC):
 class IBumpCommand(abc.ABC):
 
     class IBumpPresenter(abc.ABC):
-        pass
+
+        @abc.abstractmethod
+        def no_bump_rule_found(self, branch: str):
+            pass
+
+        @abc.abstractmethod
+        def no_changes_found(self, prev_version: Version):
+            pass
+
+        @abc.abstractmethod
+        def version_bumped(self, version: Version, prev_version: Version = None):
+            pass
 
     @abc.abstractmethod
     def bump(self, presenter: IBumpPresenter):

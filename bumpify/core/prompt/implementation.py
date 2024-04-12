@@ -14,9 +14,14 @@ _LEAVE_EMPTY_TO_SKIP = "leave empty to skip"
 
 class ClickPrompt(IPrompt):
 
-    def enum(self, text: str, enum_type: Type[Enum], default: Enum=None) -> Enum:
+    def enum(self, text: str, enum_type: Type[Enum], default: Enum = None) -> Enum:
         available_values = [x.value for x in enum_type]
-        value = click.prompt(text, type=click.Choice(available_values), default=default.value if default else None, show_default=default is not None)
+        value = click.prompt(
+            text,
+            type=click.Choice(available_values),
+            default=default.value if default else None,
+            show_default=default is not None,
+        )
         return enum_type(value)
 
     def confirm(self, question: str) -> bool:

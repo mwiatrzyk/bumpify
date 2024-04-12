@@ -10,7 +10,7 @@ from bumpify.core.config.interface import IConfigReaderWriter
 from bumpify.core.config.objects import Config
 from bumpify.core.filesystem.interface import IFileSystemReader, IFileSystemReaderWriter
 from bumpify.core.notifier.objects import Styled
-from bumpify.core.semver.objects import SemVerConfig
+from bumpify.core.semver.objects import SemVerConfig, Version
 from bumpify.core.vcs.interface import IVcsConnector, IVcsReaderWriter
 from bumpify.di import provider
 from tests import helpers
@@ -79,10 +79,13 @@ class TestInitCommand:
         config_file_abspath,
         capsys,
     ):
-        version_components = click.Choice(['major', 'minor', 'patch'])
+        version_components = click.Choice(["major", "minor", "patch"])
         optional_default = "leave empty to skip"
         click_mock.prompt.expect_call(
-            "Choose project's repository type", type=ReprEqual(click.Choice(["git"])), default=None, show_default=False
+            "Choose project's repository type",
+            type=ReprEqual(click.Choice(["git"])),
+            default=None,
+            show_default=False,
         ).will_once(Return(selected_repository_type))
         click_mock.confirm.expect_call("Create semantic versioning configuration?").will_once(
             Return(True)
@@ -91,14 +94,23 @@ class TestInitCommand:
             "Branch name/pattern for bump rule #1", default=None, type=str
         ).will_once(Return("prod"))
         click_mock.prompt.expect_call(
-            "Version component to bump on breaking change", type=ReprEqual(version_components), default='major', show_default=True
-        ).will_once(Return('major'))
+            "Version component to bump on breaking change",
+            type=ReprEqual(version_components),
+            default="major",
+            show_default=True,
+        ).will_once(Return("major"))
         click_mock.prompt.expect_call(
-            "Version component to bump on feature introduction", type=ReprEqual(version_components), default='minor', show_default=True
-        ).will_once(Return('minor'))
+            "Version component to bump on feature introduction",
+            type=ReprEqual(version_components),
+            default="minor",
+            show_default=True,
+        ).will_once(Return("minor"))
         click_mock.prompt.expect_call(
-            "Version component to bump on bug fix", type=ReprEqual(version_components), default='patch', show_default=True
-        ).will_once(Return('patch'))
+            "Version component to bump on bug fix",
+            type=ReprEqual(version_components),
+            default="patch",
+            show_default=True,
+        ).will_once(Return("patch"))
         click_mock.prompt.expect_call(
             "Prerelease name", default=optional_default, type=str
         ).will_once(Return(optional_default))
@@ -237,10 +249,14 @@ class TestBumpCommand:
         )
 
     @pytest.fixture(autouse=True)
-    def verify_version_tag(self, tmpdir_vcs: IVcsReaderWriter, semver_config: SemVerConfig, expected_version_str):
+    def verify_version_tag(
+        self, tmpdir_vcs: IVcsReaderWriter, semver_config: SemVerConfig, expected_version_str
+    ):
         yield
         tags = tmpdir_vcs.list_merged_tags()
-        assert tags[-1].name == utils.format_str(semver_config.version_tag_name_template, version_str=expected_version_str)
+        assert tags[-1].name == utils.format_str(
+            semver_config.version_tag_name_template, version_str=expected_version_str
+        )
 
     @pytest.fixture
     def bump_presenter_mock(self):
@@ -253,18 +269,75 @@ class TestBumpCommand:
         tmpdir_config.save(config)
         return tmpdir_config
 
-    @pytest.mark.parametrize("expected_version_str, expected_prev_version_str", [
-        ("0.0.1", "(null)"),
-    ])
+    @pytest.mark.parametrize(
+        "expected_version_str, expected_prev_version_str",
+        [
+            ("0.0.1", "(null)"),
+        ],
+    )
     def test_when_bump_invoked_for_a_first_time_then_initial_version_is_created(
-        self, uut: UUT, bump_presenter_mock
+        self, uut: UUT, bump_presenter_mock, expected_version_str
     ):
+        bump_presenter_mock.version_bumped.expect_call(Version.from_str(expected_version_str))
         uut.bump(bump_presenter_mock)
 
-    @pytest.mark.parametrize("commit_message, expected_version_str, expected_prev_version_str", [
-        ("fix: a fix", "0.0.2", "0.0.1"),
-    ])
-    def test_when_bump_invoked_for_a_second_time_then_another_version_is_created(self, uut: UUT, tmpdir_vcs: IVcsReaderWriter, bump_presenter_mock, commit_message):
+    @pytest.mark.parametrize(
+        "commit_message, expected_version_str, expected_prev_version_str",
+        [
+            ("fix!: a breaking fix", "1.0.0", "0.0.1"),
+            ("feat: a feature", "0.1.0", "0.0.1"),
+            ("fix: a fix", "0.0.2", "0.0.1"),
+        ],
+    )
+    def test_when_bump_invoked_for_a_second_time_then_another_version_is_created(
+        self,
+        uut: UUT,
+        tmpdir_vcs: IVcsReaderWriter,
+        bump_presenter_mock,
+        commit_message,
+        expected_version_str,
+        expected_prev_version_str,
+    ):
+        expected_version = Version.from_str(expected_version_str)
+        expected_prev_version = Version.from_str(expected_prev_version_str)
+        bump_presenter_mock.version_bumped.expect_call(expected_prev_version)
         uut.bump(bump_presenter_mock)
         tmpdir_vcs.commit(commit_message, allow_empty=True)
+        bump_presenter_mock.version_bumped.expect_call(
+            expected_version, prev_version=expected_prev_version
+        )
+        uut.bump(bump_presenter_mock)
+
+    @pytest.mark.parametrize("verify_bump_commit", [None])
+    @pytest.mark.parametrize(
+        "commit_message, expected_version_str, expected_prev_version_str",
+        [
+            ("non conventional commit", "0.0.1", "0.0.1"),
+            ("chore: no breking, feature or fix commit", "0.0.1", "0.0.1"),
+        ],
+    )
+    def test_when_non_conventional_commit_found_then_no_version_is_updated(
+        self,
+        uut: UUT,
+        tmpdir_vcs: IVcsReaderWriter,
+        bump_presenter_mock,
+        commit_message,
+        expected_prev_version_str,
+    ):
+        expected_prev_version = Version.from_str(expected_prev_version_str)
+        bump_presenter_mock.version_bumped.expect_call(expected_prev_version)
+        uut.bump(bump_presenter_mock)
+        tmpdir_vcs.commit(commit_message, allow_empty=True)
+        bump_presenter_mock.no_changes_found.expect_call(expected_prev_version)
+        uut.bump(bump_presenter_mock)
+        assert tmpdir_vcs.list_commits()[-1].message == commit_message
+
+    @pytest.mark.parametrize("verify_bump_commit", [None])
+    @pytest.mark.parametrize("verify_version_tag", [None])
+    @pytest.mark.parametrize("verify_changelog_files", [None])
+    @pytest.mark.parametrize("expected_version_str", ["0.0.0"])
+    def test_when_bump_rule_is_not_found_then_bump_is_skipped(self, uut: UUT, tmpdir_vcs: IVcsReaderWriter, bump_presenter_mock):
+        tmpdir_vcs.branch("dummy-branch")
+        tmpdir_vcs.checkout("dummy-branch")
+        bump_presenter_mock.no_bump_rule_found.expect_call("dummy-branch")
         uut.bump(bump_presenter_mock)

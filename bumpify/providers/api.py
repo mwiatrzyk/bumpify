@@ -25,8 +25,7 @@ class InitProvider(IInitCommand.IInitProvider):
 
         def provide(self) -> SemVerConfig:
             return SemVerConfig(
-                bump_rules=self._provide_bump_rules(),
-                version_files=self._provide_version_files()
+                bump_rules=self._provide_bump_rules(), version_files=self._provide_version_files()
             )
 
         def _provide_bump_rules(self) -> List[SemVerConfig.BumpRule]:
@@ -36,10 +35,22 @@ class InitProvider(IInitCommand.IInitProvider):
                 out.append(
                     SemVerConfig.BumpRule(
                         branch=self._prompt.string(f"Branch name/pattern for bump rule #{index}"),
-                        when_breaking=self._prompt.enum("Version component to bump on breaking change", VersionComponent, default=VersionComponent.MAJOR),
-                        when_feat=self._prompt.enum("Version component to bump on feature introduction", VersionComponent, default=VersionComponent.MINOR),
-                        when_fix=self._prompt.enum("Version component to bump on bug fix", VersionComponent, default=VersionComponent.PATCH),
-                        prerelease=self._prompt.string("Prerelease name", optional=True)
+                        when_breaking=self._prompt.enum(
+                            "Version component to bump on breaking change",
+                            VersionComponent,
+                            default=VersionComponent.MAJOR,
+                        ),
+                        when_feat=self._prompt.enum(
+                            "Version component to bump on feature introduction",
+                            VersionComponent,
+                            default=VersionComponent.MINOR,
+                        ),
+                        when_fix=self._prompt.enum(
+                            "Version component to bump on bug fix",
+                            VersionComponent,
+                            default=VersionComponent.PATCH,
+                        ),
+                        prerelease=self._prompt.string("Prerelease name", optional=True),
                     )
                 )
                 if not self._prompt.confirm("Add another bump rule?"):

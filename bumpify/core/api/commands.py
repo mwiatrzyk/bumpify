@@ -43,35 +43,53 @@ class BumpCommand(IBumpCommand):
         # TODO: Also update version field in config
         current_branch = self._vcs_reader_writer.current_branch()
         bump_rule = self._semver_config.config.find_bump_rule(current_branch)
+        if bump_rule is None:
+            presenter.no_bump_rule_found(current_branch)
+            return
         self._filesystem_reader_writer.clear_modified_paths()
         version_tags = self._semver_api.list_version_tags()
         if not version_tags:
-            initial_version = Version.from_str(self._semver_config.config.version)
+            version = Version.from_str(self._semver_config.config.version)
             utcnow = utils.utcnow()
             changelog = Changelog()
-            changelog.add_entry(ChangelogEntry(version=initial_version, released=utcnow))
+            changelog.add_entry(ChangelogEntry(version=version, released=utcnow))
             self._semver_api.update_changelog_files(changelog)
-            self._semver_api.update_version_files(initial_version)
-            self._create_bump_commit(initial_version)
+            self._semver_api.update_version_files(version)
+            self._commit(version)
+            presenter.version_bumped(version)
             return
         unreleased_changes = self._semver_api.fetch_unreleased_changes(version_tags[-1])
+        if unreleased_changes is None:
+            presenter.no_changes_found(version_tags[-1].version)
+            return
+        if unreleased_changes.breaking_changes:
+            component = bump_rule.when_breaking
+        elif unreleased_changes.feats:
+            component = bump_rule.when_feat
+        elif unreleased_changes.fixes:
+            component = bump_rule.when_fix
+        else:
+            presenter.no_changes_found(version_tags[-1].version)
+            return
         changelog = self._semver_api.fetch_changelog(version_tags)
-        component = bump_rule.when_fix
         prev_version = changelog.entries[-1].version
-        version = prev_version.bump(component, prerelease=bump_rule.prerelease)  # TODO: bump_rule.buildmetadata_template
+        version = prev_version.bump(
+            component, prerelease=bump_rule.prerelease
+        )  # TODO: bump_rule.buildmetadata_template
         changelog.add_entry(
             ChangelogEntry(
                 version=version,
                 prev_version=prev_version,
                 released=utils.utcnow(),
-                data=unreleased_changes
+                data=unreleased_changes,
             )
         )
         self._semver_api.update_changelog_files(changelog)
         self._semver_api.update_version_files(version)
-        self._create_bump_commit(version, prev_version=prev_version)
+        self._commit(version, prev_version=prev_version)
+        presenter.version_bumped(version, prev_version=prev_version)
 
-    def _create_bump_commit(self, version: Version, prev_version: Version = None):
+    def _commit(self, version: Version, prev_version: Version = None):
         version_str = version.to_str()
         prev_version_str = prev_version.to_str() if prev_version else "(null)"
         self.__add_modified_paths_to_bump_commit()

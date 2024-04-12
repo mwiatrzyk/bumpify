@@ -14,6 +14,7 @@ from . import _constants, _parsing
 
 class VersionComponent(enum.Enum):
     """Enumeration with version component names."""
+
     # TODO: Add comparator: major > minor > patch
     MAJOR = "major"
     MINOR = "minor"
@@ -70,6 +71,7 @@ class SemVerConfig(BaseModel):
 
     class BumpRule(BaseModel):
         """Bump rule model."""
+
         # TODO: Add validator to check if when_breaking >= when_feat >= when_fix
 
         #: Name or a regular expression pattern of a branch to use this rule for.

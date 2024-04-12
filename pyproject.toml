@@ -21,6 +21,7 @@ mockify = "^0.13.1"
 black = "^24.2.0"
 isort = "^5.13.2"
 pytest-cov = "^4.1.0"
+invoke = "^2.2.0"
 
 [tool.poetry.scripts]
 bumpify = "bumpify.delivery.cli.__main__:main"
