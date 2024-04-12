@@ -9,17 +9,18 @@ from bumpify.core.api.interface import IBumpCommand, IInitCommand
 from bumpify.core.config.interface import IConfigReaderWriter
 from bumpify.core.config.objects import Config
 from bumpify.core.filesystem.interface import IFileSystemReader, IFileSystemReaderWriter
-from bumpify.core.notifier.objects import Styled
+from bumpify.core.notifier.objects import Styled as _Styled  # TODO: Replace with the one from below
+from bumpify.core.console.objects import Styled
 from bumpify.core.semver.objects import SemVerConfig, Version
 from bumpify.core.vcs.interface import IVcsConnector, IVcsReaderWriter
-from bumpify.di import provider
+from bumpify.di import console, provider
 from tests import helpers
 from tests.matchers import ReprEqual
 
 
 @pytest.fixture
 def injector(tmpdir, config_file_path):
-    injector = Injector(provider)
+    injector = Injector(provider, env="testing")
     context = utils.inject_context(injector)
     context.project_root_dir = tmpdir
     context.config_file_path = config_file_path
@@ -163,7 +164,7 @@ class TestInitCommand:
         assert captured.out == (
             helpers.format_info(
                 "Creating initial Bumpify configuration file:",
-                Styled(config_file_abspath, bold=True),
+                _Styled(config_file_abspath, bold=True),
             )
             + helpers.format_info("Done!")
         )
@@ -181,7 +182,7 @@ class TestInitCommand:
         uut.init(provider, presenter)
         captured = capsys.readouterr()
         assert captured.out == helpers.format_warning(
-            "Config file already exists:", Styled(tmpdir_config.abspath(), bold=True)
+            "Config file already exists:", _Styled(tmpdir_config.abspath(), bold=True)
         )
 
 
@@ -259,10 +260,12 @@ class TestBumpCommand:
         )
 
     @pytest.fixture
-    def bump_presenter_mock(self):
-        mock = ABCMock("bump_presenter_mock", IBumpCommand.IBumpPresenter)
-        with satisfied(mock):
-            yield mock
+    def bump_presenter(self, injector):
+        return utils.inject_type(injector, IBumpCommand.IBumpPresenter)
+
+    @pytest.fixture
+    def console_buffer(self, injector):
+        return utils.inject_variant(injector, list, what="console-buffer")
 
     @pytest.fixture(autouse=True)
     def tmpdir_config(self, tmpdir_config: IConfigReaderWriter, config: Config):
@@ -276,10 +279,12 @@ class TestBumpCommand:
         ],
     )
     def test_when_bump_invoked_for_a_first_time_then_initial_version_is_created(
-        self, uut: UUT, bump_presenter_mock, expected_version_str
+        self, uut: UUT, bump_presenter, expected_version_str, console_buffer
     ):
-        bump_presenter_mock.version_bumped.expect_call(Version.from_str(expected_version_str))
-        uut.bump(bump_presenter_mock)
+        uut.bump(bump_presenter)
+        assert console_buffer == [
+            ("info", "Version was bumped:", Styled("(null)", bold=True), "->", Styled(expected_version_str, bold=True)),
+        ]
 
     @pytest.mark.parametrize(
         "commit_message, expected_version_str, expected_prev_version_str",
@@ -293,20 +298,19 @@ class TestBumpCommand:
         self,
         uut: UUT,
         tmpdir_vcs: IVcsReaderWriter,
-        bump_presenter_mock,
+        bump_presenter,
         commit_message,
         expected_version_str,
         expected_prev_version_str,
+        console_buffer
     ):
-        expected_version = Version.from_str(expected_version_str)
-        expected_prev_version = Version.from_str(expected_prev_version_str)
-        bump_presenter_mock.version_bumped.expect_call(expected_prev_version)
-        uut.bump(bump_presenter_mock)
+        uut.bump(bump_presenter)
         tmpdir_vcs.commit(commit_message, allow_empty=True)
-        bump_presenter_mock.version_bumped.expect_call(
-            expected_version, prev_version=expected_prev_version
-        )
-        uut.bump(bump_presenter_mock)
+        uut.bump(bump_presenter)
+        assert console_buffer == [
+            ("info", "Version was bumped:", Styled("(null)", bold=True), "->", Styled(expected_prev_version_str, bold=True)),
+            ("info", "Version was bumped:", Styled(expected_prev_version_str, bold=True), "->", Styled(expected_version_str, bold=True)),
+        ]
 
     @pytest.mark.parametrize("verify_bump_commit", [None])
     @pytest.mark.parametrize(
@@ -320,24 +324,28 @@ class TestBumpCommand:
         self,
         uut: UUT,
         tmpdir_vcs: IVcsReaderWriter,
-        bump_presenter_mock,
+        bump_presenter,
         commit_message,
         expected_prev_version_str,
+        console_buffer
     ):
-        expected_prev_version = Version.from_str(expected_prev_version_str)
-        bump_presenter_mock.version_bumped.expect_call(expected_prev_version)
-        uut.bump(bump_presenter_mock)
+        uut.bump(bump_presenter)
         tmpdir_vcs.commit(commit_message, allow_empty=True)
-        bump_presenter_mock.no_changes_found.expect_call(expected_prev_version)
-        uut.bump(bump_presenter_mock)
+        uut.bump(bump_presenter)
+        assert console_buffer == [
+            ("info", "Version was bumped:", Styled("(null)", bold=True), "->", Styled(expected_prev_version_str, bold=True)),
+            ("warning", "No changes found between version", Styled(expected_prev_version_str, bold=True), "and current", Styled("HEAD", bold=True)),
+        ]
         assert tmpdir_vcs.list_commits()[-1].message == commit_message
 
     @pytest.mark.parametrize("verify_bump_commit", [None])
     @pytest.mark.parametrize("verify_version_tag", [None])
     @pytest.mark.parametrize("verify_changelog_files", [None])
     @pytest.mark.parametrize("expected_version_str", ["0.0.0"])
-    def test_when_bump_rule_is_not_found_then_bump_is_skipped(self, uut: UUT, tmpdir_vcs: IVcsReaderWriter, bump_presenter_mock):
+    def test_when_bump_rule_is_not_found_then_bump_is_skipped(self, uut: UUT, tmpdir_vcs: IVcsReaderWriter, bump_presenter, console_buffer):
         tmpdir_vcs.branch("dummy-branch")
         tmpdir_vcs.checkout("dummy-branch")
-        bump_presenter_mock.no_bump_rule_found.expect_call("dummy-branch")
-        uut.bump(bump_presenter_mock)
+        uut.bump(bump_presenter)
+        assert console_buffer == [
+            ("warning", "No bump rule found for branch:", Styled("dummy-branch", bold=True)),
+        ]

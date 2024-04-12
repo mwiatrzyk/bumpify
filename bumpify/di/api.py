@@ -3,15 +3,17 @@ from pydio.api import Provider
 from bumpify import utils
 from bumpify.core.api.commands import BumpCommand, InitCommand
 from bumpify.core.api.interface import IBumpCommand, IInitCommand
+from bumpify.core.api.presenters import BumpCommandPresenter
 from bumpify.core.config.interface import IConfigReaderWriter
 from bumpify.core.config.objects import LoadedModuleConfig
+from bumpify.core.console.interface import IConsoleOutput
 from bumpify.core.filesystem.interface import IFileSystemReader, IFileSystemReaderWriter
 from bumpify.core.notifier.interface import INotifier
 from bumpify.core.prompt.interface import IPrompt
 from bumpify.core.semver.interface import ISemVerApi
 from bumpify.core.semver.objects import SemVerConfig
 from bumpify.core.vcs.interface import IVcsReaderWriter
-from bumpify.presenters.api import InitPresenter
+from bumpify.core.api.presenters import InitPresenter
 from bumpify.providers.api import InitProvider
 
 provider = Provider()
@@ -42,3 +44,9 @@ def make_bump_command(injector):
     filesystem_reader_writer = utils.inject_type(injector, IFileSystemReaderWriter)
     vcs_reader_writer = utils.inject_type(injector, IVcsReaderWriter)
     return BumpCommand(semver_config, semver_api, filesystem_reader_writer, vcs_reader_writer)
+
+
+@provider.provides(IBumpCommand.IBumpPresenter)
+def make_bump_command_presenter(injector):
+    cout = utils.inject_type(injector, IConsoleOutput)
+    return BumpCommandPresenter(cout)
