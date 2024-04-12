@@ -6,7 +6,7 @@ from mockify.api import ABCMock, satisfied
 
 from bumpify.core.config.implementation import ConfigReaderWriter
 from bumpify.core.config.interface import IConfigReaderWriter
-from bumpify.core.config.objects import Config, LoadedConfig, VCSConfig
+from bumpify.core.config.objects import Config, LoadedConfig, LoadedModuleConfig, VCSConfig
 from bumpify.core.filesystem.implementation import FileSystemReaderWriter
 from bumpify.core.filesystem.interface import IFileSystemReaderWriter
 from bumpify.core.notifier.interface import INotifier
@@ -63,6 +63,11 @@ def semver_config(default_branch):
         ],
         bump_rules=[SemVerConfig.BumpRule(branch=default_branch)],
     )
+
+
+@pytest.fixture
+def loaded_semver_config(semver_config, config_file_abspath):
+    return LoadedModuleConfig(config_file_abspath, semver_config)
 
 
 @pytest.fixture

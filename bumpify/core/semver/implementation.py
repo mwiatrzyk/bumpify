@@ -1,6 +1,7 @@
 import io
 from typing import List, Optional
 
+from bumpify.core.config.objects import LoadedModuleConfig
 from bumpify.core.filesystem.interface import IFileSystemReaderWriter
 from bumpify.core.semver.objects import (
     Changelog,
@@ -23,7 +24,7 @@ class SemVerApi(ISemVerApi):
 
     def __init__(
         self,
-        semver_config: SemVerConfig,
+        semver_config: LoadedModuleConfig[SemVerConfig],
         filesystem_reader_writer: IFileSystemReaderWriter,
         vcs_reader_writer: IVcsReaderWriter,
     ):
@@ -84,7 +85,7 @@ class SemVerApi(ISemVerApi):
         return result
 
     def update_changelog_files(self, changelog: Changelog):
-        for changelog_file in self._semver_config.changelog_files:
+        for changelog_file in self._semver_config.config.changelog_files:
             if changelog_file.path.endswith(".json"):
                 changelog_data = _changelog_formatters.format_as_json(changelog)
             elif changelog_file.path.endswith(".md"):
@@ -96,7 +97,7 @@ class SemVerApi(ISemVerApi):
             )
 
     def update_version_files(self, version: Version):
-        for vf in self._semver_config.version_files:
+        for vf in self._semver_config.config.version_files:
             dest = io.StringIO()
             updater = _version_file_updater.VersionFileUpdater(vf, version, dest)
             initial_content = self._filesystem_reader_writer.read(vf.path).decode(vf.encoding)

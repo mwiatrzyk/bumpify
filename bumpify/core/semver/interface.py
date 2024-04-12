@@ -80,7 +80,8 @@ class ISemVerCommandApi(abc.ABC):
 
     @abc.abstractmethod
     def update_version_files(self, version: Version):
-        """Update version in all configured version files.
+        """Update version in all user-defined version files and in Bumpify
+        config file.
 
         :param version:
             The version to be written.
