@@ -1,5 +1,15 @@
 import dataclasses
+import enum
 from typing import Any, Optional
+
+
+class Severity(enum.Enum):
+    """Severity used for events emitted to the console."""
+
+    DEBUG = -1
+    INFO = 0  # The default value
+    WARNING = 1
+    ERROR = 2
 
 
 @dataclasses.dataclass

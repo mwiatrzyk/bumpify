@@ -8,9 +8,9 @@ from bumpify import utils
 from bumpify.core.api.interface import IBumpCommand, IInitCommand
 from bumpify.core.config.interface import IConfigReaderWriter
 from bumpify.core.config.objects import Config
+from bumpify.core.console.objects import Styled
 from bumpify.core.filesystem.interface import IFileSystemReader, IFileSystemReaderWriter
 from bumpify.core.notifier.objects import Styled as _Styled  # TODO: Replace with the one from below
-from bumpify.core.console.objects import Styled
 from bumpify.core.semver.objects import SemVerConfig, Version
 from bumpify.core.vcs.interface import IVcsConnector, IVcsReaderWriter
 from bumpify.di import console, provider
@@ -263,10 +263,6 @@ class TestBumpCommand:
     def bump_presenter(self, injector):
         return utils.inject_type(injector, IBumpCommand.IBumpPresenter)
 
-    @pytest.fixture
-    def console_buffer(self, injector):
-        return utils.inject_variant(injector, list, what="console-buffer")
-
     @pytest.fixture(autouse=True)
     def tmpdir_config(self, tmpdir_config: IConfigReaderWriter, config: Config):
         tmpdir_config.save(config)
@@ -279,12 +275,18 @@ class TestBumpCommand:
         ],
     )
     def test_when_bump_invoked_for_a_first_time_then_initial_version_is_created(
-        self, uut: UUT, bump_presenter, expected_version_str, console_buffer
+        self, uut: UUT, bump_presenter, expected_version_str, capsys: pytest.CaptureFixture
     ):
         uut.bump(bump_presenter)
-        assert console_buffer == [
-            ("info", "Version was bumped:", Styled("(null)", bold=True), "->", Styled(expected_version_str, bold=True)),
-        ]
+        captured = capsys.readouterr()
+        assert captured.out == "".join([
+            helpers.format_info(
+                "Version was bumped:",
+                Styled("(null)", bold=True),
+                "->",
+                Styled(expected_version_str, bold=True),
+            ),
+        ])
 
     @pytest.mark.parametrize(
         "commit_message, expected_version_str, expected_prev_version_str",
@@ -302,22 +304,34 @@ class TestBumpCommand:
         commit_message,
         expected_version_str,
         expected_prev_version_str,
-        console_buffer
+        capsys: pytest.CaptureFixture,
     ):
         uut.bump(bump_presenter)
         tmpdir_vcs.commit(commit_message, allow_empty=True)
         uut.bump(bump_presenter)
-        assert console_buffer == [
-            ("info", "Version was bumped:", Styled("(null)", bold=True), "->", Styled(expected_prev_version_str, bold=True)),
-            ("info", "Version was bumped:", Styled(expected_prev_version_str, bold=True), "->", Styled(expected_version_str, bold=True)),
-        ]
+        captured = capsys.readouterr()
+        print(captured.out)
+        assert captured.out == "".join([
+            helpers.format_info(
+                "Version was bumped:",
+                Styled("(null)", bold=True),
+                "->",
+                Styled(expected_prev_version_str, bold=True),
+            ),
+            helpers.format_info(
+                "Version was bumped:",
+                Styled(expected_prev_version_str, bold=True),
+                "->",
+                Styled(expected_version_str, bold=True),
+            ),
+        ])
 
     @pytest.mark.parametrize("verify_bump_commit", [None])
     @pytest.mark.parametrize(
         "commit_message, expected_version_str, expected_prev_version_str",
         [
             ("non conventional commit", "0.0.1", "0.0.1"),
-            ("chore: no breking, feature or fix commit", "0.0.1", "0.0.1"),
+            ("chore: no breaking, feature or fix commit", "0.0.1", "0.0.1"),
         ],
     )
     def test_when_non_conventional_commit_found_then_no_version_is_updated(
@@ -327,25 +341,39 @@ class TestBumpCommand:
         bump_presenter,
         commit_message,
         expected_prev_version_str,
-        console_buffer
+        capsys: pytest.CaptureFixture,
     ):
         uut.bump(bump_presenter)
         tmpdir_vcs.commit(commit_message, allow_empty=True)
         uut.bump(bump_presenter)
-        assert console_buffer == [
-            ("info", "Version was bumped:", Styled("(null)", bold=True), "->", Styled(expected_prev_version_str, bold=True)),
-            ("warning", "No changes found between version", Styled(expected_prev_version_str, bold=True), "and current", Styled("HEAD", bold=True)),
-        ]
+        captured = capsys.readouterr()
+        assert captured.out == "".join([
+            helpers.format_info(
+                "Version was bumped:",
+                Styled("(null)", bold=True),
+                "->",
+                Styled(expected_prev_version_str, bold=True),
+            ),
+            helpers.format_warning(
+                "No changes found between version",
+                Styled(expected_prev_version_str, bold=True),
+                "and current",
+                Styled("HEAD", bold=True),
+            ),
+        ])
         assert tmpdir_vcs.list_commits()[-1].message == commit_message
 
     @pytest.mark.parametrize("verify_bump_commit", [None])
     @pytest.mark.parametrize("verify_version_tag", [None])
     @pytest.mark.parametrize("verify_changelog_files", [None])
     @pytest.mark.parametrize("expected_version_str", ["0.0.0"])
-    def test_when_bump_rule_is_not_found_then_bump_is_skipped(self, uut: UUT, tmpdir_vcs: IVcsReaderWriter, bump_presenter, console_buffer):
+    def test_when_bump_rule_is_not_found_then_bump_is_skipped(
+        self, uut: UUT, tmpdir_vcs: IVcsReaderWriter, bump_presenter, capsys: pytest.CaptureFixture
+    ):
         tmpdir_vcs.branch("dummy-branch")
         tmpdir_vcs.checkout("dummy-branch")
         uut.bump(bump_presenter)
-        assert console_buffer == [
-            ("warning", "No bump rule found for branch:", Styled("dummy-branch", bold=True)),
-        ]
+        captured = capsys.readouterr()
+        assert captured.out == "".join([
+            helpers.format_error("No bump rule found for branch:", Styled("dummy-branch", bold=True)),
+        ])

@@ -2,7 +2,7 @@ from pydio.api import Provider
 
 from bumpify.context import Context
 
-from . import api, config, filesystem, notifier, prompt, semver, vcs, console
+from . import api, config, console, filesystem, notifier, prompt, semver, vcs
 
 provider = Provider()
 provider.attach(api.provider)

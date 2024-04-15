@@ -1,22 +1,37 @@
+import colorama
+
 from .interface import IConsoleOutput
+from .objects import Severity, Styled
 
 
-class BufferedConsoleOutput(IConsoleOutput):
+class StdoutConsoleOutput(IConsoleOutput):
 
-    def __init__(self, buffer: list):
-        self._buffer = buffer
+    def _find_fore_color_for_severity(self, severity: Severity) -> str:
+        if severity == Severity.DEBUG:
+            return colorama.Fore.BLUE
+        if severity == Severity.INFO:
+            return colorama.Fore.CYAN
+        if severity == Severity.WARNING:
+            return colorama.Fore.MAGENTA
+        return colorama.Fore.RED
 
-    def _emit(self, *values, level: str):
-        self._buffer.append((level, *values))
+    def _format_message(self, *args) -> str:
+        parts = []
+        for arg in args:
+            if isinstance(arg, str):
+                parts.append(arg)
+            elif isinstance(arg, Styled):
+                parts.append(self._format_styled(arg))
+            else:
+                parts.append(str(arg))
+        return " ".join(parts)
 
-    def debug(self, *values):
-        self._emit(*values, level="debug")
+    def _format_styled(self, styled: Styled) -> str:
+        if styled.bold:
+            return f"{colorama.Style.BRIGHT}{styled.value}{colorama.Style.NORMAL}"
+        return str(styled.obj)
 
-    def info(self, *values):
-        self._emit(*values, level="info")
-
-    def warning(self, *values):
-        self._emit(*values, level="warning")
-
-    def error(self, *values):
-        self._emit(*values, level="error")
+    def emit(self, severity: Severity, *args):
+        fore = self._find_fore_color_for_severity(severity)
+        message = self._format_message(*args)
+        print(f"{fore}{message}{colorama.Fore.RESET}")
