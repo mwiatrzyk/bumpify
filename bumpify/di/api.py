@@ -4,6 +4,7 @@ from bumpify import utils
 from bumpify.core.api.commands import BumpCommand, InitCommand
 from bumpify.core.api.interface import IBumpCommand, IInitCommand
 from bumpify.core.api.presenters import BumpCommandPresenter, InitPresenter
+from bumpify.core.api.providers import InitProvider
 from bumpify.core.config.interface import IConfigReaderWriter
 from bumpify.core.config.objects import LoadedModuleConfig
 from bumpify.core.console.interface import IConsoleInput, IConsoleOutput
@@ -11,7 +12,6 @@ from bumpify.core.filesystem.interface import IFileSystemReaderWriter
 from bumpify.core.semver.interface import ISemVerApi
 from bumpify.core.semver.objects import SemVerConfig
 from bumpify.core.vcs.interface import IVcsReaderWriter
-from bumpify.providers.api import InitProvider
 
 provider = Provider()
 
