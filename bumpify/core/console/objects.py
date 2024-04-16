@@ -27,8 +27,5 @@ class Styled:
     #: Render using bold (True) or normal (False) font.
     bold: bool = False
 
-    #: Render using underlined (True) or normal (False) font.
-    underline: bool = False
-
     #: Set foreground color for a value.
-    fore: Optional[str] = None
+    fg: Optional[str] = None

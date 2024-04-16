@@ -10,17 +10,16 @@ from bumpify.core.config.interface import IConfigReaderWriter
 from bumpify.core.config.objects import Config
 from bumpify.core.console.objects import Styled
 from bumpify.core.filesystem.interface import IFileSystemReader, IFileSystemReaderWriter
-from bumpify.core.notifier.objects import Styled as _Styled  # TODO: Replace with the one from below
-from bumpify.core.semver.objects import SemVerConfig, Version
+from bumpify.core.semver.objects import SemVerConfig
 from bumpify.core.vcs.interface import IVcsConnector, IVcsReaderWriter
-from bumpify.di import console, provider
+from bumpify.di import provider
 from tests import helpers
 from tests.matchers import ReprEqual
 
 
 @pytest.fixture
 def injector(tmpdir, config_file_path):
-    injector = Injector(provider, env="testing")
+    injector = Injector(provider)
     context = utils.inject_context(injector)
     context.project_root_dir = tmpdir
     context.config_file_path = config_file_path
@@ -78,7 +77,7 @@ class TestInitCommand:
         selected_version_file_1,
         selected_version_file_2,
         config_file_abspath,
-        capsys,
+        capsys: pytest.CaptureFixture,
     ):
         version_components = click.Choice(["major", "minor", "patch"])
         optional_default = "leave empty to skip"
@@ -164,7 +163,7 @@ class TestInitCommand:
         assert captured.out == (
             helpers.format_info(
                 "Creating initial Bumpify configuration file:",
-                _Styled(config_file_abspath, bold=True),
+                Styled(config_file_abspath, bold=True),
             )
             + helpers.format_info("Done!")
         )
@@ -176,13 +175,13 @@ class TestInitCommand:
         config: Config,
         provider: IInitCommand.IInitProvider,
         presenter: IInitCommand.IInitPresenter,
-        capsys,
+        capsys: pytest.CaptureFixture,
     ):
         tmpdir_config.save(config)
         uut.init(provider, presenter)
         captured = capsys.readouterr()
         assert captured.out == helpers.format_warning(
-            "Config file already exists:", _Styled(tmpdir_config.abspath(), bold=True)
+            "Config file already exists:", Styled(tmpdir_config.abspath(), bold=True)
         )
 
 

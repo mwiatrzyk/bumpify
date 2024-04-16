@@ -1,9 +1,5 @@
 from bumpify.core.console.interface import IConsoleOutput
 from bumpify.core.console.objects import Severity, Styled
-from bumpify.core.notifier.interface import INotifier
-from bumpify.core.notifier.objects import (
-    Styled as _Styled,
-)  # TODO: Replace with the one from above; I want to make single common module for console-related stuff
 from bumpify.core.semver.objects import Version
 
 from .interface import IBumpCommand, IInitCommand
@@ -11,21 +7,23 @@ from .interface import IBumpCommand, IInitCommand
 
 class InitPresenter(IInitCommand.IInitPresenter):
 
-    def __init__(self, status_listener: INotifier):
-        self._status_listener = status_listener
+    def __init__(self, cout: IConsoleOutput):
+        self._cout = cout
 
     def notify_skipped(self, config_file_abspath: str):
-        self._status_listener.warning(
-            "Config file already exists:", _Styled(config_file_abspath, bold=True)
+        self._cout.emit(
+            Severity.WARNING,
+            "Config file already exists:", Styled(config_file_abspath, bold=True)
         )
 
     def notify_started(self, config_file_abspath: str):
-        self._status_listener.info(
-            "Creating initial Bumpify configuration file:", _Styled(config_file_abspath, bold=True)
+        self._cout.emit(
+            Severity.INFO,
+            "Creating initial Bumpify configuration file:", Styled(config_file_abspath, bold=True)
         )
 
     def notify_done(self):
-        self._status_listener.info("Done!")
+        self._cout.emit(Severity.INFO, "Done!")
 
 
 class BumpCommandPresenter(IBumpCommand.IBumpPresenter):

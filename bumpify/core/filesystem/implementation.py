@@ -3,8 +3,8 @@ import textwrap
 from typing import Iterator, Set
 
 from bumpify import utils
-from bumpify.core.notifier.interface import INotifier
-from bumpify.core.notifier.objects import Styled
+from bumpify.core.console.interface import IConsoleOutput
+from bumpify.core.console.objects import Severity, Styled
 
 from . import exc
 from .interface import IFileSystemReaderWriter, IFileSystemWriter
@@ -98,9 +98,9 @@ class DryRunFileSystemReaderWriterProxy(IFileSystemWriter):
         performed.
     """
 
-    def __init__(self, target: IFileSystemReaderWriter, notifier: INotifier):
+    def __init__(self, target: IFileSystemReaderWriter, cout: IConsoleOutput):
         self._target = target
-        self._notifier = notifier
+        self._cout = cout
         self._modified_paths = set()
 
     def __getattr__(self, name):
@@ -127,13 +127,15 @@ class DryRunFileSystemReaderWriterProxy(IFileSystemWriter):
     def _write_str(self, path: str, action: str, content: str):
         content = textwrap.indent(content, "  ")
         content = Styled(content, fg="blue")
-        self._notifier.info(
+        self._cout.emit(
+            Severity.INFO,
             "Would", action, "file at", path, "and set it with following content:\n", content
         )
 
     def _write_bytes(self, path: str, action: str, content: bytes):
         content_size_str = Styled(f"{len(content)} bytes", bold=True)
-        self._notifier.info(
+        self._cout.emit(
+            Severity.INFO,
             "Would",
             action,
             "file at",

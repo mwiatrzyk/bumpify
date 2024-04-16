@@ -11,7 +11,7 @@ from bumpify.core.filesystem.implementation import (
     FileSystemReaderWriter,
 )
 from bumpify.core.filesystem.interface import IFileSystemReaderWriter
-from bumpify.core.notifier.objects import Styled
+from bumpify.core.console.objects import Severity, Styled
 
 
 @pytest.fixture(
@@ -143,15 +143,15 @@ class TestDryRunFileSystemReaderWriterProxy:
     SUT = IFileSystemReaderWriter
 
     @pytest.fixture
-    def sut(self, filesystem_reader_writer_mock, status_listener_mock):
+    def sut(self, filesystem_reader_writer_mock, console_output_mock):
         return DryRunFileSystemReaderWriterProxy(
-            filesystem_reader_writer_mock, status_listener_mock
+            filesystem_reader_writer_mock, console_output_mock
         )
 
     @pytest.fixture(autouse=True)
-    def setup(self, filesystem_reader_writer_mock, status_listener_mock):
+    def setup(self, filesystem_reader_writer_mock, console_output_mock):
         self.target_mock = filesystem_reader_writer_mock
-        self.notifier_mock = status_listener_mock
+        self.console_output_mock = console_output_mock
 
     @pytest.mark.parametrize(
         "args, result",
@@ -226,21 +226,21 @@ class TestDryRunFileSystemReaderWriterProxy:
     )
     def test_write(self, sut: SUT, path, exists, payload, expected_message):
         self.target_mock.exists.expect_call(path).will_once(Return(exists))
-        self.notifier_mock.info.expect_call(*expected_message)
+        self.console_output_mock.emit.expect_call(Severity.INFO, *expected_message)
         sut.write(path, payload)
 
     def test_when_write_called_then_path_is_added_to_modified_paths(
         self, sut: SUT, path, normalized_path
     ):
         self.target_mock.exists.expect_call(path).will_once(Return(True))
-        self.notifier_mock.info.expect_call(_, _, _, _, _, _)
+        self.console_output_mock.emit.expect_call(Severity.INFO, _, _, _, _, _, _)
         assert sut.modified_paths() == set()
         sut.write(path, b"content")
         assert sut.modified_paths() == {normalized_path}
 
     def test_clear_modified_paths(self, sut: SUT, path, normalized_path):
         self.target_mock.exists.expect_call(path).will_once(Return(True))
-        self.notifier_mock.info.expect_call(_, _, _, _, _, _)
+        self.console_output_mock.emit.expect_call(Severity.INFO, _, _, _, _, _, _)
         assert sut.modified_paths() == set()
         sut.write(path, b"content")
         assert sut.modified_paths() == {normalized_path}

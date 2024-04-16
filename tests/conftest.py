@@ -9,7 +9,7 @@ from bumpify.core.config.interface import IConfigReaderWriter
 from bumpify.core.config.objects import Config, LoadedConfig, LoadedModuleConfig, VCSConfig
 from bumpify.core.filesystem.implementation import FileSystemReaderWriter
 from bumpify.core.filesystem.interface import IFileSystemReaderWriter
-from bumpify.core.notifier.interface import INotifier
+from bumpify.core.console.interface import IConsoleOutput
 from bumpify.core.semver.objects import SemVerConfig
 from bumpify.core.vcs.implementation.git import GitVcsConnector
 from bumpify.core.vcs.interface import IVcsConnector, IVcsReaderWriter
@@ -25,8 +25,8 @@ def filesystem_reader_writer_mock():
 
 
 @pytest.fixture
-def status_listener_mock():
-    mock = ABCMock("status_listener_mock", INotifier)
+def console_output_mock():
+    mock = ABCMock("console_output_mock", IConsoleOutput)
     with satisfied(mock):
         yield mock
 

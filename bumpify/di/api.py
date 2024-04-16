@@ -7,8 +7,7 @@ from bumpify.core.api.presenters import BumpCommandPresenter, InitPresenter
 from bumpify.core.config.interface import IConfigReaderWriter
 from bumpify.core.config.objects import LoadedModuleConfig
 from bumpify.core.console.interface import IConsoleOutput
-from bumpify.core.filesystem.interface import IFileSystemReader, IFileSystemReaderWriter
-from bumpify.core.notifier.interface import INotifier
+from bumpify.core.filesystem.interface import IFileSystemReaderWriter
 from bumpify.core.prompt.interface import IPrompt
 from bumpify.core.semver.interface import ISemVerApi
 from bumpify.core.semver.objects import SemVerConfig
@@ -32,8 +31,8 @@ def make_init_provider(injector):
 
 @provider.provides(IInitCommand.IInitPresenter)
 def make_init_presenter(injector):
-    status_listener = utils.inject_type(injector, INotifier)
-    return InitPresenter(status_listener)
+    cout = utils.inject_type(injector, IConsoleOutput)
+    return InitPresenter(cout)
 
 
 @provider.provides(IBumpCommand)
