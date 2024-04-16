@@ -5,13 +5,13 @@ import typing
 import pytest
 from mockify.api import Return, _
 
+from bumpify.core.console.objects import Severity, Styled
 from bumpify.core.filesystem import exc as fs_exc
 from bumpify.core.filesystem.implementation import (
     DryRunFileSystemReaderWriterProxy,
     FileSystemReaderWriter,
 )
 from bumpify.core.filesystem.interface import IFileSystemReaderWriter
-from bumpify.core.console.objects import Severity, Styled
 
 
 @pytest.fixture(
@@ -144,9 +144,7 @@ class TestDryRunFileSystemReaderWriterProxy:
 
     @pytest.fixture
     def sut(self, filesystem_reader_writer_mock, console_output_mock):
-        return DryRunFileSystemReaderWriterProxy(
-            filesystem_reader_writer_mock, console_output_mock
-        )
+        return DryRunFileSystemReaderWriterProxy(filesystem_reader_writer_mock, console_output_mock)
 
     @pytest.fixture(autouse=True)
     def setup(self, filesystem_reader_writer_mock, console_output_mock):

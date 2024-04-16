@@ -62,7 +62,7 @@ class TestConfigReaderWriter:
 
     @pytest.mark.parametrize(
         "payload, expected_errors",
-        [(b'[vcs]\ntype="dummy"', [("vcs.type", "Input should be 'git'")])],
+        [(b'[vcs]\ntype="dummy"', [("vcs.type", "Input should be 'auto' or 'git'")])],
     )
     def test_load_fails_with_validation_error_if_config_file_has_invalid_settings(
         self, sut: SUT, payload, expected_errors

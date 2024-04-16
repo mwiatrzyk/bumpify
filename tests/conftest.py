@@ -7,9 +7,9 @@ from mockify.api import ABCMock, satisfied
 from bumpify.core.config.implementation import ConfigReaderWriter
 from bumpify.core.config.interface import IConfigReaderWriter
 from bumpify.core.config.objects import Config, LoadedConfig, LoadedModuleConfig, VCSConfig
+from bumpify.core.console.interface import IConsoleOutput
 from bumpify.core.filesystem.implementation import FileSystemReaderWriter
 from bumpify.core.filesystem.interface import IFileSystemReaderWriter
-from bumpify.core.console.interface import IConsoleOutput
 from bumpify.core.semver.objects import SemVerConfig
 from bumpify.core.vcs.implementation.git import GitVcsConnector
 from bumpify.core.vcs.interface import IVcsConnector, IVcsReaderWriter

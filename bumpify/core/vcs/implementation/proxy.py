@@ -18,7 +18,10 @@ class DryRunVcsReaderWriterProxy(IVcsWriter):
         for path in paths:
             self._cout.emit(
                 Severity.INFO,
-                "Would", add, "following file to the next commit:", Styled(path, bold=True)
+                "Would",
+                add,
+                "following file to the next commit:",
+                Styled(path, bold=True),
             )
 
     def branch(self, name: str):
@@ -39,7 +42,12 @@ class DryRunVcsReaderWriterProxy(IVcsWriter):
         result_styled = Styled(result, bold=True)
         self._cout.emit(
             Severity.INFO,
-            "Would create a", commit, "with message", message, "and return", result_styled
+            "Would create a",
+            commit,
+            "with message",
+            message,
+            "and return",
+            result_styled,
         )
         return result
 

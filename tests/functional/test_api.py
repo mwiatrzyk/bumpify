@@ -37,8 +37,8 @@ class TestInitCommand:
         return utils.inject_type(injector, IInitCommand)
 
     @pytest.fixture
-    def click_mock(self):
-        mock = Mock("click")
+    def builtins_mock(self):
+        mock = Mock("builtins")
         with satisfied(mock), ordered(mock):
             yield mock
 
@@ -72,7 +72,7 @@ class TestInitCommand:
         tmpdir_config: IConfigReaderWriter,
         provider: Provider,
         presenter: Presenter,
-        click_mock,
+        builtins_mock,
         selected_repository_type,
         selected_version_file_1,
         selected_version_file_2,
@@ -81,67 +81,87 @@ class TestInitCommand:
     ):
         version_components = click.Choice(["major", "minor", "patch"])
         optional_default = "leave empty to skip"
-        click_mock.prompt.expect_call(
-            "Choose project's repository type",
-            type=ReprEqual(click.Choice(["git"])),
-            default=None,
-            show_default=False,
+        builtins_mock.input.expect_call(
+            helpers.format_prompt(
+                "Choose project's repository type",
+                Styled("[auto, git]", bold=True),
+                Styled("(default: auto)", bold=True),
+            )
         ).will_once(Return(selected_repository_type))
-        click_mock.confirm.expect_call("Create semantic versioning configuration?").will_once(
-            Return(True)
-        )
-        click_mock.prompt.expect_call(
-            "Branch name/pattern for bump rule #1", default=None, type=str
+        builtins_mock.input.expect_call(
+            helpers.format_prompt(
+                "Create semantic versioning configuration?", Styled("[Y/n]", bold=True)
+            )
+        ).will_once(Return("y"))
+        builtins_mock.input.expect_call(
+            helpers.format_prompt("Branch name/pattern for bump rule #1")
         ).will_once(Return("prod"))
-        click_mock.prompt.expect_call(
-            "Version component to bump on breaking change",
-            type=ReprEqual(version_components),
-            default="major",
-            show_default=True,
+        builtins_mock.input.expect_call(
+            helpers.format_prompt(
+                "Version component to bump on breaking change",
+                Styled("[major, minor, patch]", bold=True),
+                Styled("(default: major)", bold=True),
+            )
         ).will_once(Return("major"))
-        click_mock.prompt.expect_call(
-            "Version component to bump on feature introduction",
-            type=ReprEqual(version_components),
-            default="minor",
-            show_default=True,
+        builtins_mock.input.expect_call(
+            helpers.format_prompt(
+                "Version component to bump on feature introduction",
+                Styled("[major, minor, patch]", bold=True),
+                Styled("(default: minor)", bold=True),
+            )
         ).will_once(Return("minor"))
-        click_mock.prompt.expect_call(
-            "Version component to bump on bug fix",
-            type=ReprEqual(version_components),
-            default="patch",
-            show_default=True,
+        builtins_mock.input.expect_call(
+            helpers.format_prompt(
+                "Version component to bump on bug fix",
+                Styled("[major, minor, patch]", bold=True),
+                Styled("(default: patch)", bold=True),
+            )
         ).will_once(Return("patch"))
-        click_mock.prompt.expect_call(
-            "Prerelease name", default=optional_default, type=str
+        builtins_mock.input.expect_call(
+            helpers.format_prompt("Prerelease name", Styled("[leave empty to skip]", bold=True))
         ).will_once(Return(optional_default))
-        click_mock.confirm.expect_call("Add another bump rule?").will_once(Return(False))
-        click_mock.prompt.expect_call("Version file #1 path", type=Type(click.Path)).will_once(
+        builtins_mock.input.expect_call(
+            helpers.format_prompt("Add another bump rule?", Styled("[y/N]", bold=True))
+        ).will_once(Return("n"))
+        builtins_mock.input.expect_call(helpers.format_prompt("Version file #1 path")).will_once(
             Return(selected_version_file_1["path"])
         )
-        click_mock.prompt.expect_call(
-            "Version file #1 prefix", default=optional_default, type=str
-        ).will_once(Return(selected_version_file_1["prefix"] or optional_default))
-        click_mock.prompt.expect_call(
-            "Version file #1 section", default=optional_default, type=str
-        ).will_once(Return(selected_version_file_1["section"] or optional_default))
-        click_mock.prompt.expect_call(
-            "Version file #1 encoding", default="utf-8", type=str
+        builtins_mock.input.expect_call(
+            helpers.format_prompt(
+                "Version file #1 prefix", Styled("[leave empty to skip]", bold=True)
+            )
+        ).will_once(Return(selected_version_file_1["prefix"] or ""))
+        builtins_mock.input.expect_call(
+            helpers.format_prompt(
+                "Version file #1 section", Styled("[leave empty to skip]", bold=True)
+            )
+        ).will_once(Return(selected_version_file_1["section"] or ""))
+        builtins_mock.input.expect_call(
+            helpers.format_prompt("Version file #1 encoding", Styled("(default: utf-8)", bold=True))
         ).will_once(Return(selected_version_file_1["encoding"] or "utf-8"))
-        click_mock.confirm.expect_call("Add another version file?").will_once(Return(True))
-        click_mock.prompt.expect_call("Version file #2 path", type=Type(click.Path)).will_once(
+        builtins_mock.input.expect_call(
+            helpers.format_prompt("Add another version file?", Styled("[y/N]", bold=True))
+        ).will_once(Return("y"))
+        builtins_mock.input.expect_call(helpers.format_prompt("Version file #2 path")).will_once(
             Return(selected_version_file_2["path"])
         )
-        click_mock.prompt.expect_call(
-            "Version file #2 prefix", default=optional_default, type=str
-        ).will_once(Return(selected_version_file_2["prefix"] or optional_default))
-        click_mock.prompt.expect_call(
-            "Version file #2 section", default=optional_default, type=str
-        ).will_once(Return(selected_version_file_2["section"] or optional_default))
-        click_mock.prompt.expect_call(
-            "Version file #2 encoding", default="utf-8", type=str
+        builtins_mock.input.expect_call(
+            helpers.format_prompt(
+                "Version file #2 prefix", Styled("[leave empty to skip]", bold=True)
+            )
+        ).will_once(Return(selected_version_file_2["prefix"] or ""))
+        builtins_mock.input.expect_call(
+            helpers.format_prompt(
+                "Version file #2 section", Styled("[leave empty to skip]", bold=True)
+            )
+        ).will_once(Return(selected_version_file_2["section"] or ""))
+        builtins_mock.input.expect_call(
+            helpers.format_prompt("Version file #2 encoding", Styled("(default: utf-8)", bold=True))
         ).will_once(Return(selected_version_file_2["encoding"] or "utf-8"))
-        click_mock.confirm.expect_call("Add another version file?").will_once(Return(False))
-        with patched(click_mock):
+        builtins_mock.input.expect_call(
+            helpers.format_prompt("Add another version file?", Styled("[y/N]", bold=True))
+        ).will_once(Return("n"))
+        with patched(builtins_mock):
             uut.init(provider, presenter)
         loaded_config = tmpdir_config.load()
         assert loaded_config is not None
@@ -278,14 +298,16 @@ class TestBumpCommand:
     ):
         uut.bump(bump_presenter)
         captured = capsys.readouterr()
-        assert captured.out == "".join([
-            helpers.format_info(
-                "Version was bumped:",
-                Styled("(null)", bold=True),
-                "->",
-                Styled(expected_version_str, bold=True),
-            ),
-        ])
+        assert captured.out == "".join(
+            [
+                helpers.format_info(
+                    "Version was bumped:",
+                    Styled("(null)", bold=True),
+                    "->",
+                    Styled(expected_version_str, bold=True),
+                ),
+            ]
+        )
 
     @pytest.mark.parametrize(
         "commit_message, expected_version_str, expected_prev_version_str",
@@ -310,20 +332,22 @@ class TestBumpCommand:
         uut.bump(bump_presenter)
         captured = capsys.readouterr()
         print(captured.out)
-        assert captured.out == "".join([
-            helpers.format_info(
-                "Version was bumped:",
-                Styled("(null)", bold=True),
-                "->",
-                Styled(expected_prev_version_str, bold=True),
-            ),
-            helpers.format_info(
-                "Version was bumped:",
-                Styled(expected_prev_version_str, bold=True),
-                "->",
-                Styled(expected_version_str, bold=True),
-            ),
-        ])
+        assert captured.out == "".join(
+            [
+                helpers.format_info(
+                    "Version was bumped:",
+                    Styled("(null)", bold=True),
+                    "->",
+                    Styled(expected_prev_version_str, bold=True),
+                ),
+                helpers.format_info(
+                    "Version was bumped:",
+                    Styled(expected_prev_version_str, bold=True),
+                    "->",
+                    Styled(expected_version_str, bold=True),
+                ),
+            ]
+        )
 
     @pytest.mark.parametrize("verify_bump_commit", [None])
     @pytest.mark.parametrize(
@@ -346,20 +370,22 @@ class TestBumpCommand:
         tmpdir_vcs.commit(commit_message, allow_empty=True)
         uut.bump(bump_presenter)
         captured = capsys.readouterr()
-        assert captured.out == "".join([
-            helpers.format_info(
-                "Version was bumped:",
-                Styled("(null)", bold=True),
-                "->",
-                Styled(expected_prev_version_str, bold=True),
-            ),
-            helpers.format_warning(
-                "No changes found between version",
-                Styled(expected_prev_version_str, bold=True),
-                "and current",
-                Styled("HEAD", bold=True),
-            ),
-        ])
+        assert captured.out == "".join(
+            [
+                helpers.format_info(
+                    "Version was bumped:",
+                    Styled("(null)", bold=True),
+                    "->",
+                    Styled(expected_prev_version_str, bold=True),
+                ),
+                helpers.format_warning(
+                    "No changes found between version",
+                    Styled(expected_prev_version_str, bold=True),
+                    "and current",
+                    Styled("HEAD", bold=True),
+                ),
+            ]
+        )
         assert tmpdir_vcs.list_commits()[-1].message == commit_message
 
     @pytest.mark.parametrize("verify_bump_commit", [None])
@@ -373,6 +399,10 @@ class TestBumpCommand:
         tmpdir_vcs.checkout("dummy-branch")
         uut.bump(bump_presenter)
         captured = capsys.readouterr()
-        assert captured.out == "".join([
-            helpers.format_error("No bump rule found for branch:", Styled("dummy-branch", bold=True)),
-        ])
+        assert captured.out == "".join(
+            [
+                helpers.format_error(
+                    "No bump rule found for branch:", Styled("dummy-branch", bold=True)
+                ),
+            ]
+        )

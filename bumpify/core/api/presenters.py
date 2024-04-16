@@ -12,14 +12,14 @@ class InitPresenter(IInitCommand.IInitPresenter):
 
     def notify_skipped(self, config_file_abspath: str):
         self._cout.emit(
-            Severity.WARNING,
-            "Config file already exists:", Styled(config_file_abspath, bold=True)
+            Severity.WARNING, "Config file already exists:", Styled(config_file_abspath, bold=True)
         )
 
     def notify_started(self, config_file_abspath: str):
         self._cout.emit(
             Severity.INFO,
-            "Creating initial Bumpify configuration file:", Styled(config_file_abspath, bold=True)
+            "Creating initial Bumpify configuration file:",
+            Styled(config_file_abspath, bold=True),
         )
 
     def notify_done(self):

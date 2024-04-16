@@ -6,7 +6,7 @@ from bumpify.core.console.objects import Styled
 def format_styled_param(value: Styled) -> str:
     if value.bold:
         return f"{colorama.Style.BRIGHT}{value.value}{colorama.Style.NORMAL}"
-    return value.obj
+    return value.value
 
 
 def format_message_params(*params) -> str:
@@ -31,3 +31,7 @@ def format_warning(*params) -> str:
 
 def format_error(*params) -> str:
     return f"{colorama.Fore.RED}{format_message_params(*params)}{colorama.Fore.RESET}\n"
+
+
+def format_prompt(*params) -> str:
+    return f"{colorama.Fore.CYAN}{format_message_params(*params)}{colorama.Fore.RESET}: "

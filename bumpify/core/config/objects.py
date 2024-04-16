@@ -35,7 +35,7 @@ class VCSConfig(BaseModel):
     class Type(enum.Enum):
         """Supported VCS types."""
 
-        #: Git
+        AUTO = "auto"
         GIT = "git"
 
     #: VCS type.

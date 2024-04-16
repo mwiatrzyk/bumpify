@@ -6,9 +6,8 @@ from bumpify.core.api.interface import IBumpCommand, IInitCommand
 from bumpify.core.api.presenters import BumpCommandPresenter, InitPresenter
 from bumpify.core.config.interface import IConfigReaderWriter
 from bumpify.core.config.objects import LoadedModuleConfig
-from bumpify.core.console.interface import IConsoleOutput
+from bumpify.core.console.interface import IConsoleInput, IConsoleOutput
 from bumpify.core.filesystem.interface import IFileSystemReaderWriter
-from bumpify.core.prompt.interface import IPrompt
 from bumpify.core.semver.interface import ISemVerApi
 from bumpify.core.semver.objects import SemVerConfig
 from bumpify.core.vcs.interface import IVcsReaderWriter
@@ -25,8 +24,8 @@ def make_init_command(injector):
 
 @provider.provides(IInitCommand.IInitProvider)
 def make_init_provider(injector):
-    prompt = utils.inject_type(injector, IPrompt)
-    return InitProvider(prompt)
+    cin = utils.inject_type(injector, IConsoleInput)
+    return InitProvider(cin)
 
 
 @provider.provides(IInitCommand.IInitPresenter)

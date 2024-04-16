@@ -61,7 +61,11 @@ class TestDryRunVcsReaderWriterProxy:
     @pytest.mark.parametrize("rev_or_name", [make_dummy_rev(), "v1.2.3", "dummy"])
     def test_checkout(self, rev_or_name):
         self.console_output_mock.emit.expect_call(
-            Severity.INFO, "Would", Styled("checkout", bold=True), "HEAD at", Styled(rev_or_name, bold=True)
+            Severity.INFO,
+            "Would",
+            Styled("checkout", bold=True),
+            "HEAD at",
+            Styled(rev_or_name, bold=True),
         )
         self.sut.checkout(rev_or_name)
 

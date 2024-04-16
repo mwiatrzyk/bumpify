@@ -129,7 +129,12 @@ class DryRunFileSystemReaderWriterProxy(IFileSystemWriter):
         content = Styled(content, fg="blue")
         self._cout.emit(
             Severity.INFO,
-            "Would", action, "file at", path, "and set it with following content:\n", content
+            "Would",
+            action,
+            "file at",
+            path,
+            "and set it with following content:\n",
+            content,
         )
 
     def _write_bytes(self, path: str, action: str, content: bytes):
