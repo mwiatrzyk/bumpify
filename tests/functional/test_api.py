@@ -23,8 +23,8 @@ def injector(tmpdir, config_file_path):
     context = utils.inject_context(injector)
     context.project_root_dir = tmpdir
     context.config_file_path = config_file_path
-    with injector:
-        yield injector
+    with injector.scoped("action") as action_injector:
+        yield action_injector
 
 
 class TestInitCommand:
@@ -331,7 +331,6 @@ class TestBumpCommand:
         tmpdir_vcs.commit(commit_message, allow_empty=True)
         uut.bump(bump_presenter)
         captured = capsys.readouterr()
-        print(captured.out)
         assert captured.out == "".join(
             [
                 helpers.format_info(

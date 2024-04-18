@@ -33,5 +33,9 @@ def format_error(*params) -> str:
     return f"{colorama.Fore.RED}{format_message_params(*params)}{colorama.Fore.RESET}\n"
 
 
+def format_exception(e: Exception) -> str:
+    return format_error(Styled(f"{e.__module__}.{e.__class__.__qualname__}:", bold=True), str(e))
+
+
 def format_prompt(*params) -> str:
     return f"{colorama.Fore.CYAN}{format_message_params(*params)}{colorama.Fore.RESET}: "

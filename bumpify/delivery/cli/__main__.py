@@ -6,8 +6,10 @@ from pydio.api import Injector
 from pydio.base import IInjector
 
 from bumpify import utils
-from bumpify.core.api.interface import IInitCommand
+from bumpify.core.api.interface import IBumpCommand, IInitCommand
 from bumpify.di import provider
+
+from .decorators import catch_errors
 
 
 @click.group(
@@ -57,12 +59,29 @@ def bumpify(ctx: click.Context, config_file_path: str, config_file_encoding: str
 
 @bumpify.command()
 @click.pass_obj
+@catch_errors
 def init(injector: IInjector):
     """Create initial configuration file interactively."""
     command = utils.inject_type(injector, IInitCommand)
     provider = utils.inject_type(injector, IInitCommand.IInitProvider)
     presenter = utils.inject_type(injector, IInitCommand.IInitPresenter)
     command.init(provider, presenter)
+
+
+@bumpify.command()
+@click.pass_obj
+@catch_errors
+def bump(injector: IInjector):
+    """Bump project's version.
+
+    This command analyzes severity of recent changes and based on that
+    determines which version component should be bumped. Once new version is
+    calculated, the command then updates version and changelog files, and makes
+    a bump commit, which finally is tagged with a newly calculated version tag.
+    """
+    command = utils.inject_type(injector, IBumpCommand)
+    presenter = utils.inject_type(injector, IBumpCommand.IBumpPresenter)
+    command.bump(presenter)
 
 
 def main():

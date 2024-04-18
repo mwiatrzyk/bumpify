@@ -2,6 +2,7 @@ from pydio.api import Provider
 
 from bumpify.core.console.input import StdinConsoleInput
 from bumpify.core.console.interface import IConsoleInput, IConsoleOutput
+from bumpify.core.console.objects import Severity
 from bumpify.core.console.output import StdoutConsoleOutput
 
 provider = Provider()

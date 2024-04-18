@@ -8,6 +8,18 @@ class IConsoleOutput(abc.ABC):
     """Output interface for the console."""
 
     @abc.abstractmethod
+    def count_by_severity(self, severity: Severity) -> int:
+        """Return total number of messages emitted with given *severity* since
+        this object was created.
+
+        For example, if this is called with ``Severity.ERROR``, then returned
+        number will be total number of error messages.
+
+        :param severity:
+            Severity to be counted.
+        """
+
+    @abc.abstractmethod
     def emit(self, severity: Severity, *message):
         """Emit a message to the console.
 

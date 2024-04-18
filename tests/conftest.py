@@ -61,7 +61,7 @@ def semver_config(default_branch):
         changelog_files=[
             SemVerConfig.ChangelogFile(path="CHANGELOG.md"),
         ],
-        bump_rules=[SemVerConfig.BumpRule(branch=default_branch)],
+        bump_rules=[SemVerConfig.BumpRule(branch=f"^{default_branch}$")],
     )
 
 

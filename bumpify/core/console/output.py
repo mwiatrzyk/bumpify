@@ -1,10 +1,14 @@
 import colorama
 
+from . import _message_formatter
 from .interface import IConsoleOutput
-from .objects import Severity, Styled
+from .objects import Severity
 
 
 class StdoutConsoleOutput(IConsoleOutput):
+
+    def __init__(self):
+        self._severity_counter = {}
 
     def _find_fore_color_for_severity(self, severity: Severity) -> str:
         if severity == Severity.DEBUG:
@@ -15,23 +19,12 @@ class StdoutConsoleOutput(IConsoleOutput):
             return colorama.Fore.MAGENTA
         return colorama.Fore.RED
 
-    def _format_message(self, *args) -> str:
-        parts = []
-        for arg in args:
-            if isinstance(arg, str):
-                parts.append(arg)
-            elif isinstance(arg, Styled):
-                parts.append(self._format_styled(arg))
-            else:
-                parts.append(str(arg))
-        return " ".join(parts)
-
-    def _format_styled(self, styled: Styled) -> str:
-        if styled.bold:
-            return f"{colorama.Style.BRIGHT}{styled.value}{colorama.Style.NORMAL}"
-        return str(styled.obj)
+    def count_by_severity(self, severity: Severity) -> int:
+        return self._severity_counter.get(severity, 0)
 
     def emit(self, severity: Severity, *args):
+        self._severity_counter.setdefault(severity, 0)
+        self._severity_counter[severity] += 1
         fore = self._find_fore_color_for_severity(severity)
-        message = self._format_message(*args)
+        message = _message_formatter.format_message(args)
         print(f"{fore}{message}{colorama.Fore.RESET}")

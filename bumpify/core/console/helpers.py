@@ -1,8 +1,8 @@
 import enum
 from typing import Optional, Type, Union
 
-from .interface import IConsoleInput
-from .objects import Styled
+from .interface import IConsoleInput, IConsoleOutput
+from .objects import Severity, Styled
 
 
 def prompt_confirm(cin: IConsoleInput, question: Union[str, list], default: bool = None) -> bool:
@@ -81,3 +81,21 @@ def prompt_string(
     if default:
         prompt.append(Styled(f"(default: {default})", bold=True))
     return cin.input(prompt, parser)
+
+
+def print_exception(cout: IConsoleOutput, e: Exception):
+    """Emit exception to the console.
+
+    :param cout:
+        Console output object.
+
+    :param e:
+        Exception object.
+    """
+    cout.emit(
+        Severity.ERROR, Styled(f"{e.__module__}.{e.__class__.__qualname__}:", bold=True), str(e)
+    )
+
+
+def print_error(cout: IConsoleOutput, *values):
+    cout.emit(Severity.ERROR, *values)
