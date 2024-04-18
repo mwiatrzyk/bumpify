@@ -5,7 +5,7 @@ from click_help_colors import HelpColorsGroup
 from pydio.api import Injector
 from pydio.base import IInjector
 
-from bumpify import utils
+from bumpify import utils, __version__
 from bumpify.core.api.interface import IBumpCommand, IInitCommand
 from bumpify.di import provider
 
@@ -35,6 +35,7 @@ from .decorators import catch_errors
 @click.option(
     "-n", "--dry-run", is_flag=True, help="Print what would be done without doing anything"
 )
+@click.version_option(__version__)
 @click.pass_context
 def bumpify(ctx: click.Context, config_file_path: str, config_file_encoding: str, dry_run: bool):
     """Automated semantic versioning and changelog generation for software

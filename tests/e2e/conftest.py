@@ -37,6 +37,9 @@ class SUT(IBumpifyCliApp):
                 fail_on_stderr=True,
             ).decode()
 
+    def __call__(self, version: bool = False) -> str:
+        return self._run("--version" if version else None)
+
     def init(self, input: str = None) -> str:
         return self._run("init", input=input)
 
