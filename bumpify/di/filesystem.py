@@ -1,7 +1,11 @@
 from pydio.api import Provider
 
 from bumpify import utils
-from bumpify.core.filesystem.implementation import FileSystemReaderWriter
+from bumpify.core.console.interface import IConsoleOutput
+from bumpify.core.filesystem.implementation import (
+    DryRunFileSystemReaderWriterProxy,
+    FileSystemReaderWriter,
+)
 from bumpify.core.filesystem.interface import IFileSystemReader, IFileSystemReaderWriter
 
 provider = Provider()
@@ -10,7 +14,11 @@ provider = Provider()
 @provider.provides(IFileSystemReaderWriter)
 def make_filesystem_reader_writer(injector):
     context = utils.inject_context(injector)
-    return FileSystemReaderWriter(context.project_root_dir)
+    out = FileSystemReaderWriter(context.project_root_dir)
+    if not context.dry_run:
+        return out
+    cout = utils.inject_type(injector, IConsoleOutput)
+    return DryRunFileSystemReaderWriterProxy(out, cout)
 
 
 @provider.provides(IFileSystemReader)

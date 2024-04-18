@@ -86,11 +86,14 @@ class TestWithExistingAndConfiguredProject:
             data_fs: IFileSystemReader,
             semver_config: SemVerConfig,
             expected_version_str: str,
+            dry_run: bool
         ):
             for vf in semver_config.version_files:
                 template = data_fs.read(f"templates/dummy-project/{vf.path}.txt").decode()
                 tmpdir_fs.write(vf.path, template.format(version="0.0.0").encode())
             yield
+            if dry_run:
+                return
             for vf in semver_config.version_files:
                 expected_content = (
                     data_fs.read(f"templates/dummy-project/{vf.path}.txt")
@@ -105,16 +108,21 @@ class TestWithExistingAndConfiguredProject:
             tmpdir_fs: IFileSystemReaderWriter,
             semver_config: SemVerConfig,
             expected_version_str: str,
+            dry_run: bool
         ):
             yield
+            if dry_run:
+                return
             for cf in semver_config.changelog_files:
                 assert expected_version_str in tmpdir_fs.read(cf.path).decode()
 
         @pytest.fixture(autouse=True)
         def verify_version_tag(
-            self, tmpdir_vcs: IVcsReaderWriter, semver_config: SemVerConfig, expected_version_str
+            self, tmpdir_vcs: IVcsReaderWriter, semver_config: SemVerConfig, expected_version_str, dry_run: bool
         ):
             yield
+            if dry_run:
+                return
             tags = tmpdir_vcs.list_merged_tags()
             assert tags[-1].name == utils.format_str(
                 semver_config.version_tag_name_template, version_str=expected_version_str
@@ -123,7 +131,15 @@ class TestWithExistingAndConfiguredProject:
         @pytest.mark.parametrize("expected_version_str", ["0.0.1"])
         def test_create_initial_version(self, sut: SUT, expected_version_str: str):
             stdout = sut.bump()
-            assert stdout == helpers.format_info("Version was bumped:", Styled("(null)", bold=True), "->", Styled(expected_version_str, bold=True)).strip()
+            assert (
+                stdout
+                == helpers.format_info(
+                    "Version was bumped:",
+                    Styled("(null)", bold=True),
+                    "->",
+                    Styled(expected_version_str, bold=True),
+                ).strip()
+            )
 
         @pytest.mark.parametrize(
             "commit_message, expected_version_str, expected_prev_version_str",
@@ -133,14 +149,38 @@ class TestWithExistingAndConfiguredProject:
                 ("fix: a fix", "0.0.2", "0.0.1"),
             ],
         )
-        def test_create_next_version(self, sut: SUT, tmpdir_vcs: IVcsReaderWriter, expected_version_str: str, expected_prev_version_str: str, commit_message: str):
+        def test_create_next_version(
+            self,
+            sut: SUT,
+            tmpdir_vcs: IVcsReaderWriter,
+            expected_version_str: str,
+            expected_prev_version_str: str,
+            commit_message: str,
+        ):
             stdout = sut.bump()
-            assert stdout == helpers.format_info("Version was bumped:", Styled("(null)", bold=True), "->", Styled(expected_prev_version_str, bold=True)).strip()
+            assert (
+                stdout
+                == helpers.format_info(
+                    "Version was bumped:",
+                    Styled("(null)", bold=True),
+                    "->",
+                    Styled(expected_prev_version_str, bold=True),
+                ).strip()
+            )
             tmpdir_vcs.commit(commit_message, allow_empty=True)
             stdout = sut.bump()
-            assert stdout == helpers.format_info(
+            assert (
+                stdout
+                == helpers.format_info(
                     "Version was bumped:",
                     Styled(expected_prev_version_str, bold=True),
                     "->",
                     Styled(expected_version_str, bold=True),
                 ).strip()
+            )
+
+        @pytest.mark.parametrize("dry_run", [True])
+        @pytest.mark.parametrize("expected_version_str", ["0.0.1"])
+        def test_bump_with_dry_run_enabled(self, sut: SUT):
+            stdout = sut.bump()
+            assert "Would" in stdout

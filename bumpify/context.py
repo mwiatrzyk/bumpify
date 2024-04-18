@@ -18,3 +18,6 @@ class Context:
 
     #: Encoding used to encode/decode config file.
     config_file_encoding: str = "utf-8"
+
+    #: Flag telling if we're running in a "dry run" mode.
+    dry_run: bool = False

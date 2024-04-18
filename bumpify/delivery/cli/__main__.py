@@ -30,10 +30,13 @@ from .decorators import catch_errors
     "--config-file-encoding",
     default="utf-8",
     show_default=True,
-    help="Encoding to be used when saving or reading config file.",
+    help="Encoding to be used when reading or writing config file.",
+)
+@click.option(
+    "-n", "--dry-run", is_flag=True, help="Print what would be done without doing anything"
 )
 @click.pass_context
-def bumpify(ctx: click.Context, config_file_path: str, config_file_encoding: str):
+def bumpify(ctx: click.Context, config_file_path: str, config_file_encoding: str, dry_run: bool):
     """Automated semantic versioning and changelog generation for software
     projects.
 
@@ -54,6 +57,7 @@ def bumpify(ctx: click.Context, config_file_path: str, config_file_encoding: str
     bumpify_context.project_root_dir = os.getcwd()
     bumpify_context.config_file_path = config_file_path
     bumpify_context.config_file_encoding = config_file_encoding
+    bumpify_context.dry_run = dry_run
     ctx.obj = ctx.with_resource(injector)
 
 

@@ -19,6 +19,9 @@ def format_message(message: Union[str, list]) -> str:
 
 
 def format_styled(styled: Styled) -> str:
+    out = styled.value
     if styled.bold:
-        return f"{colorama.Style.BRIGHT}{styled.value}{colorama.Style.NORMAL}"
-    return str(styled.value)
+        out = f"{colorama.Style.BRIGHT}{out}{colorama.Style.NORMAL}"
+    if styled.fg:
+        out = f"{getattr(colorama.Fore, styled.fg.upper(), colorama.Fore.RESET)}{out}{colorama.Fore.RESET}"
+    return out
