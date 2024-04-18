@@ -9,6 +9,7 @@ from bumpify.core.vcs.interface import IVcsConnector, IVcsReaderWriter
 provider = Provider()
 
 
+@provider.provides(Variant(IVcsConnector, what=VCSConfig.Type.AUTO))
 @provider.provides(Variant(IVcsConnector, what=VCSConfig.Type.GIT))
 def make_git_vcs_connector(injector):
     filesystem_reader = utils.inject_type(injector, IFileSystemReader)

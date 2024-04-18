@@ -51,6 +51,16 @@ def default_branch():
 
 
 @pytest.fixture
+def vcs_type():
+    return VCSConfig.Type.GIT
+
+
+@pytest.fixture
+def vcs_config(vcs_type):
+    return VCSConfig(type=vcs_type)
+
+
+@pytest.fixture
 def semver_config(default_branch):
     return SemVerConfig(
         version_files=[
@@ -71,8 +81,8 @@ def loaded_semver_config(semver_config, config_file_abspath):
 
 
 @pytest.fixture
-def config(semver_config):
-    config = Config(vcs=VCSConfig(type=VCSConfig.Type.GIT))
+def config(semver_config, vcs_config):
+    config = Config(vcs=vcs_config)
     config.save_module_config(semver_config)
     return config
 
