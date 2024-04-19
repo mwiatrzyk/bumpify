@@ -12,3 +12,11 @@ def format(ctx):
 def test(ctx):
     """Run all tests."""
     ctx.run("pytest")
+
+
+@invoke.task
+def clean(ctx):
+    """Clean the workspace from build artifacts."""
+    ctx.run("find . -name *.pyc -delete")
+    ctx.run("find . -type d -empty -delete")
+    ctx.run("rm -rf dist")
