@@ -26,6 +26,11 @@ commands:
           paths:
             - ~/.cache/pypoetry/
 
+  push-to-git:
+    steps:
+      - run: git push --set-upstream origin $CIRCLE_BRANCH
+      - run: git push --tags
+
 jobs:
   test:
     docker:
@@ -50,3 +55,11 @@ workflows:
           name: "test-py39"
           ver_major: 3
           ver_minor: 9
+      - test:
+          name: "test-py310"
+          ver_major: 3
+          ver_minor: 10
+      - test:
+          name: "test-py311"
+          ver_major: 3
+          ver_minor: 11
