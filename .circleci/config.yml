@@ -42,7 +42,7 @@ jobs:
         type: integer
     steps:
       - checkout
-      #- configure-git
+      - configure-git
       - install-deps:
           ver_major: <<parameters.ver_major>>
           ver_minor: <<parameters.ver_minor>>
