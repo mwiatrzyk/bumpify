@@ -42,11 +42,22 @@ jobs:
         type: integer
     steps:
       - checkout
-      - configure-git
+      #- configure-git
       - install-deps:
           ver_major: <<parameters.ver_major>>
           ver_minor: <<parameters.ver_minor>>
       - run: poetry run pytest
+
+  bump:
+    docker:
+      - image: cimg/python:3.11
+    steps:
+      - checkout
+      - configure-git
+      - install-deps:
+          ver_major: 3
+          ver_minor: 11
+      - run: poetry run bumpify bump
 
 workflows:
   test:
@@ -63,3 +74,8 @@ workflows:
           name: "test-py311"
           ver_major: 3
           ver_minor: 11
+      - bump:
+          requires:
+            - "test-py39"
+            - "test-py310"
+            - "test-py311"
