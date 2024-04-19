@@ -66,7 +66,7 @@ def bumpify(ctx: click.Context, config_file_path: str, config_file_encoding: str
 @click.pass_obj
 @catch_errors
 def init(injector: IInjector):
-    """Create initial configuration file interactively."""
+    """Initialize Bumpify for the current project."""
     command = utils.inject_type(injector, IInitCommand)
     provider = utils.inject_type(injector, IInitCommand.IInitProvider)
     presenter = utils.inject_type(injector, IInitCommand.IInitPresenter)
@@ -77,7 +77,7 @@ def init(injector: IInjector):
 @click.pass_obj
 @catch_errors
 def bump(injector: IInjector):
-    """Bump project's version.
+    """Create new release of the current project.
 
     This command analyzes severity of recent changes and based on that
     determines which version component should be bumped. Once new version is
