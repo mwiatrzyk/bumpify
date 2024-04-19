@@ -22,9 +22,7 @@ def make_git_vcs_connector(injector):
 def make_vcs_reader_writer(injector):
     context = utils.inject_context(injector)
     config = utils.inject_type(injector, Config)
-    connector = utils.inject_variant(
-        injector, IVcsConnector, what=config.vcs.type
-    )
+    connector = utils.inject_variant(injector, IVcsConnector, what=config.vcs.type)
     obj = connector.connect()
     if not context.dry_run:
         return obj

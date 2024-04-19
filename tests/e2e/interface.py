@@ -4,7 +4,7 @@ import abc
 class IBumpifyCliApp(abc.ABC):
 
     @abc.abstractmethod
-    def __call__(self, version: bool=False) -> str:
+    def __call__(self, version: bool = False) -> str:
         pass
 
     @abc.abstractmethod

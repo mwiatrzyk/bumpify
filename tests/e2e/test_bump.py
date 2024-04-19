@@ -86,7 +86,7 @@ class TestWithExistingAndConfiguredProject:
             data_fs: IFileSystemReader,
             semver_config: SemVerConfig,
             expected_version_str: str,
-            dry_run: bool
+            dry_run: bool,
         ):
             for vf in semver_config.version_files:
                 template = data_fs.read(f"templates/dummy-project/{vf.path}.txt").decode()
@@ -108,7 +108,7 @@ class TestWithExistingAndConfiguredProject:
             tmpdir_fs: IFileSystemReaderWriter,
             semver_config: SemVerConfig,
             expected_version_str: str,
-            dry_run: bool
+            dry_run: bool,
         ):
             yield
             if dry_run:
@@ -118,7 +118,11 @@ class TestWithExistingAndConfiguredProject:
 
         @pytest.fixture(autouse=True)
         def verify_version_tag(
-            self, tmpdir_vcs: IVcsReaderWriter, semver_config: SemVerConfig, expected_version_str, dry_run: bool
+            self,
+            tmpdir_vcs: IVcsReaderWriter,
+            semver_config: SemVerConfig,
+            expected_version_str,
+            dry_run: bool,
         ):
             yield
             if dry_run:

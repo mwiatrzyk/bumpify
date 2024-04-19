@@ -5,7 +5,7 @@ from click_help_colors import HelpColorsGroup
 from pydio.api import Injector
 from pydio.base import IInjector
 
-from bumpify import utils, __version__
+from bumpify import __version__, utils
 from bumpify.core.api.interface import IBumpCommand, IInitCommand
 from bumpify.di import provider
 
