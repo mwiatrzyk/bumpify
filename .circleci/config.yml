@@ -65,6 +65,7 @@ jobs:
       - image: cimg/python:3.11
     steps:
       - checkout
+      - configure-git
       - install-deps:
           ver_major: 3
           ver_minor: 11
