@@ -1,6 +1,6 @@
 # Bumpify
 
-Automate semantic versioning of your projects.
+Semantic versioning automation tool for software projects.
 
 ## About
 
