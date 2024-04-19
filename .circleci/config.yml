@@ -58,6 +58,20 @@ jobs:
           ver_major: 3
           ver_minor: 11
       - run: poetry run bumpify bump
+      - push-to-git
+
+  deploy:
+    docker:
+      - image: cimg/python:3.11
+    steps:
+      - checkout
+      - install-deps:
+          ver_major: 3
+          ver_minor: 11
+      - run: poetry run pytest
+      - run: poetry build
+      - run: poetry config pypi-token.pypi $BUMPIFY_PYPI_TOKEN
+      - run: poetry publish
 
 workflows:
   test:
@@ -79,3 +93,9 @@ workflows:
             - "test-py39"
             - "test-py310"
             - "test-py311"
+      - deploy:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v.*$/
