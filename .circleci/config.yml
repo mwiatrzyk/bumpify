@@ -78,6 +78,10 @@ workflows:
   test:
     jobs:
       - test:
+          name: "test-py38"
+          ver_major: 3
+          ver_minor: 8
+      - test:
           name: "test-py39"
           ver_major: 3
           ver_minor: 9
@@ -91,6 +95,7 @@ workflows:
           ver_minor: 11
       - bump:
           requires:
+            - "test-py38"
             - "test-py39"
             - "test-py310"
             - "test-py311"
