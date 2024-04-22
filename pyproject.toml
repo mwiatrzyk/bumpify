@@ -15,10 +15,10 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.8"
 click = "^8.1.7"
 pydio = "^0.4.1"
-pydantic = "^2.6.3"
+pydantic = "2.6.3"
 tomlkit = "^0.12.4"
 colorama = "^0.4.6"
 click-help-colors = "^0.9.4"
