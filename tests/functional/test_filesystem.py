@@ -14,6 +14,10 @@ from bumpify.core.filesystem.implementation import (
 from bumpify.core.filesystem.interface import IFileSystemReaderWriter
 
 
+def randbytes(count: int) -> bytes:
+    return bytes(random.randint(0, 255) for _ in range(count))
+
+
 @pytest.fixture(
     params=[
         ("foo.txt", "foo.txt", b"content of foo.txt"),
@@ -195,7 +199,7 @@ class TestDryRunFileSystemReaderWriterProxy:
             (
                 "dummy.txt",
                 True,
-                random.randbytes(128),
+                randbytes(128),
                 (
                     "Would",
                     Styled("overwrite", bold=True),
@@ -209,7 +213,7 @@ class TestDryRunFileSystemReaderWriterProxy:
             (
                 "dummy.txt",
                 False,
-                random.randbytes(64),
+                randbytes(64),
                 (
                     "Would",
                     Styled("create", bold=True),
