@@ -93,12 +93,17 @@ workflows:
           name: "test-py311"
           ver_major: 3
           ver_minor: 11
+      - test:
+          name: "test-py312"
+          ver_major: 3
+          ver_minor: 12
       - bump:
           requires:
             - "test-py38"
             - "test-py39"
             - "test-py310"
             - "test-py311"
+            - "test-py312"
       - deploy:
           filters:
             branches:
