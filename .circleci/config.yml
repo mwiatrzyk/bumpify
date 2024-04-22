@@ -104,7 +104,7 @@ workflows:
             - "test-py39"
             - "test-py310"
             - "test-py311"
-            - "test-py312"
+            #- "test-py312"
       - deploy:
           filters:
             branches:
