@@ -1,3 +1,7 @@
+![PyPI - Version](https://img.shields.io/pypi/v/bumpify)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/bumpify)
+![PyPI - License](https://img.shields.io/pypi/l/bumpify)
+
 # Bumpify
 
 Semantic versioning automation tool for software projects.
