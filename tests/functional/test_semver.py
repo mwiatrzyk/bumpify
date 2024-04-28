@@ -24,8 +24,8 @@ API = ISemVerApi
 
 
 @pytest.fixture
-def api(loaded_semver_config, tmpdir_fs, vcs_reader_writer_mock):
-    return SemVerApi(loaded_semver_config, tmpdir_fs, vcs_reader_writer_mock)
+def api(loaded_semver_config, tmpdir_fs, vcs_reader_writer_mock, hook_api_stub):
+    return SemVerApi(loaded_semver_config, tmpdir_fs, vcs_reader_writer_mock, hook_api_stub)
 
 
 class TestListMergedVersionTags:

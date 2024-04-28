@@ -3,6 +3,7 @@ from typing import List, Optional
 
 from bumpify.core.config.objects import LoadedModuleConfig
 from bumpify.core.filesystem.interface import IFileSystemReaderWriter
+from bumpify.core.hook.interface import IHookApi
 from bumpify.core.semver.objects import (
     Changelog,
     ChangelogEntry,
@@ -13,7 +14,7 @@ from bumpify.core.semver.objects import (
 )
 from bumpify.core.vcs.interface import IVcsReaderWriter
 
-from . import _changelog_formatters, _version_file_updater
+from . import _changelog_formatters, _hook_invokers, _version_file_updater
 from .exc import UnsupportedChangelogFormat
 from .interface import ISemVerApi
 from .objects import SemVerConfig
@@ -27,10 +28,12 @@ class SemVerApi(ISemVerApi):
         semver_config: LoadedModuleConfig[SemVerConfig],
         filesystem_reader_writer: IFileSystemReaderWriter,
         vcs_reader_writer: IVcsReaderWriter,
+        hook_api: IHookApi,
     ):
         self._semver_config = semver_config
         self._filesystem_reader_writer = filesystem_reader_writer
         self._vcs_reader_writer = vcs_reader_writer
+        self._hook_api = hook_api
 
     def list_version_tags(self) -> List[VersionTag]:
         result = []
@@ -46,7 +49,9 @@ class SemVerApi(ISemVerApi):
     ) -> List[ConventionalCommit]:
         result = []
         for commit in self._vcs_reader_writer.list_commits(start_rev=start_rev, end_rev=end_rev):
-            maybe_conventional_commit = ConventionalCommit.from_commit(commit)
+            maybe_conventional_commit = _hook_invokers.invoke_parse_commit_hook(
+                self._hook_api, commit
+            )
             if maybe_conventional_commit:
                 result.append(maybe_conventional_commit)
         return result

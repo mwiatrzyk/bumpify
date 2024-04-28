@@ -46,6 +46,8 @@ def shell_exec(*args, input: bytes = None, fail_on_stderr: bool = False, env: di
     )
     stdout, stderr = (x.strip() for x in p.communicate(input=input))
     if p.returncode != 0 or (fail_on_stderr and stderr):
+        logger.error("Shell command %r failed with returncode %d", args, p.returncode)
+        logger.error(stderr.decode())
         raise exc.ShellCommandError(args, p.returncode, stdout, stderr)
     return stdout
 

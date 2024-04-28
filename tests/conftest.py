@@ -10,6 +10,8 @@ from bumpify.core.config.objects import Config, LoadedConfig, LoadedModuleConfig
 from bumpify.core.console.interface import IConsoleOutput
 from bumpify.core.filesystem.implementation import FileSystemReaderWriter
 from bumpify.core.filesystem.interface import IFileSystemReaderWriter
+from bumpify.core.hook.implementation import AlwaysDefaultHookApiLoader
+from bumpify.core.hook.interface import IHookApi
 from bumpify.core.semver.objects import SemVerConfig
 from bumpify.core.vcs.implementation.git import GitVcsConnector
 from bumpify.core.vcs.interface import IVcsConnector, IVcsReaderWriter
@@ -43,6 +45,11 @@ def config_reader_writer_mock():
     mock = ABCMock("config_reader_writer_mock", IConfigReaderWriter)
     with satisfied(mock):
         yield mock
+
+
+@pytest.fixture
+def hook_api_stub():
+    return AlwaysDefaultHookApiLoader().load()
 
 
 @pytest.fixture

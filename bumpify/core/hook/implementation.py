@@ -68,7 +68,6 @@ class HookApiLoader(IHookApiLoader):
     class _HookApi(IHookApi):
 
         def __init__(self, all_hook_functions: dict):
-            print(all_hook_functions)
             self._all_hook_functions = all_hook_functions
 
         def loaded_hook_names(self) -> Set[str]:
@@ -76,7 +75,6 @@ class HookApiLoader(IHookApiLoader):
 
         def get_hook(self, name: str, default_func: Callable) -> IHookFunction:
             maybe_hook = self._all_hook_functions.get(name)
-            print(maybe_hook)
             if maybe_hook is None:
                 return _HookFunction(default_func)
             return _HookFunction(maybe_hook)
