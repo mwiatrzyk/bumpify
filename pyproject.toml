@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "bumpify"
-version = "0.1.0"
+version = "0.2.0"
 description = "Semantic versioning automation tool for software projects"
 authors = ["Maciej Wiatrzyk <maciej.wiatrzyk@gmail.com>"]
 license = "MIT"

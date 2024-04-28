@@ -1,3 +1,10 @@
+## 0.2.0 (2024-04-28)
+
+### Feat
+
+- add `core.hook` module providing core mechanisms for implementing hooks
+- add `commit_parser_hook` for semantic versioning
+
 ## 0.1.0 (2024-04-22)
 
 ### Feat
