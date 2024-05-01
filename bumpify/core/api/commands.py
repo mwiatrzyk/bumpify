@@ -1,6 +1,6 @@
 from bumpify import utils
 from bumpify.core.config.interface import IConfigReaderWriter
-from bumpify.core.config.objects import LoadedModuleConfig
+from bumpify.core.config.objects import LoadedSection
 from bumpify.core.filesystem.interface import IFileSystemReader, IFileSystemReaderWriter
 from bumpify.core.semver.interface import ISemVerApi
 from bumpify.core.semver.objects import Changelog, ChangelogEntry, SemVerConfig, Version
@@ -29,7 +29,7 @@ class BumpCommand(IBumpCommand):
 
     def __init__(
         self,
-        semver_config: LoadedModuleConfig[SemVerConfig],
+        semver_config: LoadedSection[SemVerConfig],
         semver_api: ISemVerApi,
         filesystem_reader_writer: IFileSystemReaderWriter,
         vcs_reader_writer: IVcsReaderWriter,

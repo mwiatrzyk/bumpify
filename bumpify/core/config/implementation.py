@@ -58,14 +58,13 @@ class ConfigReaderWriter(IConfigReaderWriter):
         try:
             return LoadedConfig(
                 config_file_abspath=self.abspath(),
-                config=Config(**data),
+                config=Config(data=data),
             )
         except pydantic.ValidationError as e:
             raise ConfigValidationError(self.abspath(), exc.ValidationError(e))
 
     def save(self, config: Config):
-        data = config.model_dump()
-        data = utils.json_dict(data, exclude_none=True)
+        data = utils.json_dict(config.data, exclude_none=True)
         data = tomlkit.dumps(data)
         self._filesystem_reader_writer.write(
             self._config_file_path, data.encode(self._config_file_encoding)

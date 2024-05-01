@@ -6,15 +6,15 @@ from mockify.api import ABCMock, satisfied
 
 from bumpify.core.config.implementation import ConfigReaderWriter
 from bumpify.core.config.interface import IConfigReaderWriter
-from bumpify.core.config.objects import Config, LoadedConfig, LoadedModuleConfig, VCSConfig
+from bumpify.core.config.objects import Config, LoadedConfig, LoadedSection
 from bumpify.core.console.interface import IConsoleOutput
 from bumpify.core.filesystem.implementation import FileSystemReaderWriter
 from bumpify.core.filesystem.interface import IFileSystemReaderWriter
 from bumpify.core.hook.implementation import AlwaysDefaultHookApiLoader
-from bumpify.core.hook.interface import IHookApi
 from bumpify.core.semver.objects import SemVerConfig
 from bumpify.core.vcs.implementation.git import GitVcsConnector
 from bumpify.core.vcs.interface import IVcsConnector, IVcsReaderWriter
+from bumpify.core.vcs.objects import VCSConfig
 
 colorama.init()
 
@@ -84,13 +84,14 @@ def semver_config(default_branch):
 
 @pytest.fixture
 def loaded_semver_config(semver_config, config_file_abspath):
-    return LoadedModuleConfig(config_file_abspath, semver_config)
+    return LoadedSection(config_file_abspath, semver_config)
 
 
 @pytest.fixture
 def config(semver_config, vcs_config):
-    config = Config(vcs=vcs_config)
-    config.save_module_config(semver_config)
+    config = Config()
+    config.save_section(vcs_config)
+    config.save_section(semver_config)
     return config
 
 

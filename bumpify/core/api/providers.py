@@ -1,10 +1,11 @@
 from typing import List
 
 from bumpify.core.api.interface import IInitCommand
-from bumpify.core.config.objects import Config, VCSConfig
+from bumpify.core.config.objects import Config
 from bumpify.core.console.helpers import prompt_confirm, prompt_enum, prompt_string
 from bumpify.core.console.interface import IConsoleInput
 from bumpify.core.semver.objects import SemVerConfig, VersionComponent
+from bumpify.core.vcs.objects import VCSConfig
 
 
 class InitProvider(IInitCommand.IInitProvider):
@@ -13,9 +14,10 @@ class InitProvider(IInitCommand.IInitProvider):
         self._cin = cin
 
     def provide_config(self) -> Config:
-        config = Config(vcs=self._VCSConfigProvider(self._cin).provide())
+        config = Config()
+        config.save_section(self._VCSConfigProvider(self._cin).provide())
         if prompt_confirm(self._cin, "Create semantic versioning configuration?", default=True):
-            config.save_module_config(self._SemVerConfigProvider(self._cin).provide())
+            config.save_section(self._SemVerConfigProvider(self._cin).provide())
         return config
 
     class _SemVerConfigProvider:

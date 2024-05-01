@@ -1,7 +1,7 @@
 import io
 from typing import List, Optional
 
-from bumpify.core.config.objects import LoadedModuleConfig
+from bumpify.core.config.objects import LoadedSection
 from bumpify.core.filesystem.interface import IFileSystemReaderWriter
 from bumpify.core.hook.interface import IHookApi
 from bumpify.core.semver.objects import (
@@ -25,7 +25,7 @@ class SemVerApi(ISemVerApi):
 
     def __init__(
         self,
-        semver_config: LoadedModuleConfig[SemVerConfig],
+        semver_config: LoadedSection[SemVerConfig],
         filesystem_reader_writer: IFileSystemReaderWriter,
         vcs_reader_writer: IVcsReaderWriter,
         hook_api: IHookApi,

@@ -43,7 +43,7 @@ class TestLoadHook:
     @pytest.fixture
     def loaded_config(self, loaded_config: LoadedConfig, hook_config: Optional[HookConfig]):
         if hook_config is not None:
-            loaded_config.config.save_module_config(hook_config)
+            loaded_config.config.save_section(hook_config)
         return loaded_config
 
     @pytest.fixture

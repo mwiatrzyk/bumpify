@@ -7,8 +7,9 @@ from bumpify import utils
 from bumpify.core.config.exc import ConfigParseError, ConfigValidationError
 from bumpify.core.config.implementation import ConfigReaderWriter
 from bumpify.core.config.interface import IConfigReaderWriter
-from bumpify.core.config.objects import Config, register_module_config
+from bumpify.core.config.objects import Config, register_section
 from bumpify.core.filesystem.interface import IFileSystemReaderWriter
+from bumpify.core.vcs.objects import VCSConfig
 
 
 class TestConfigReaderWriter:
@@ -39,8 +40,8 @@ class TestConfigReaderWriter:
         assert loaded_config is not None
         assert loaded_config.config_file_abspath == self.config_file_abspath
         assert utils.json_dict(
-            loaded_config.config.model_dump(), exclude_none=True
-        ) == utils.json_dict(self.config.model_dump(), exclude_none=True)
+            loaded_config.config.data, exclude_none=True
+        ) == utils.json_dict(self.config.data, exclude_none=True)
 
     def test_load_returns_none_if_config_file_does_not_exist(self, sut: SUT):
         assert not self.tmpdir_fs.exists(self.config_file_path)
@@ -69,20 +70,20 @@ class TestConfigReaderWriter:
     ):
         self.tmpdir_fs.write(self.config_file_path, payload)
         with pytest.raises(ConfigValidationError) as excinfo:
-            sut.load()
+            sut.load().require_section(VCSConfig)
         assert excinfo.value.config_file_abspath == self.config_file_abspath
         assert [(e.loc_str, e.msg) for e in excinfo.value.original_exc.errors] == expected_errors
 
-    def test_register_module_settings_model_and_parse_module_settings(self, sut: SUT):
+    def test_register_section_model_and_parse_module_settings(self, sut: SUT):
 
-        @register_module_config("dummy")
+        @register_section("dummy")
         class Dummy(BaseModel):
             foo: int
 
         dummy = Dummy(foo=123)
-        self.config.save_module_config(dummy)
+        self.config.save_section(dummy)
         sut.save(self.config)
         loaded_config = sut.load()
         assert loaded_config is not None
-        loaded_module_config = loaded_config.config.load_module_config(Dummy)
+        loaded_module_config = loaded_config.config.load_section(Dummy)
         assert loaded_module_config == dummy

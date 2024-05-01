@@ -3,7 +3,7 @@ from typing import Any, Optional
 import pytest
 
 from bumpify import utils
-from bumpify.core.config.objects import VCSConfig
+from bumpify.core.vcs.objects import VCSConfig
 from tests.e2e.interface import IBumpifyCliApp
 
 

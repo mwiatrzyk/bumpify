@@ -6,7 +6,7 @@ from bumpify.core.api.interface import IBumpCommand, IInitCommand
 from bumpify.core.api.presenters import BumpCommandPresenter, InitPresenter
 from bumpify.core.api.providers import InitProvider
 from bumpify.core.config.interface import IConfigReaderWriter
-from bumpify.core.config.objects import LoadedModuleConfig
+from bumpify.core.config.objects import LoadedSection
 from bumpify.core.console.interface import IConsoleInput, IConsoleOutput
 from bumpify.core.filesystem.interface import IFileSystemReaderWriter
 from bumpify.core.semver.interface import ISemVerApi
@@ -36,7 +36,7 @@ def make_init_presenter(injector):
 
 @provider.provides(IBumpCommand)
 def make_bump_command(injector):
-    semver_config = utils.inject_type(injector, LoadedModuleConfig[SemVerConfig])
+    semver_config = utils.inject_type(injector, LoadedSection[SemVerConfig])
     semver_api = utils.inject_type(injector, ISemVerApi)
     filesystem_reader_writer = utils.inject_type(injector, IFileSystemReaderWriter)
     vcs_reader_writer = utils.inject_type(injector, IVcsReaderWriter)

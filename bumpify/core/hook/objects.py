@@ -2,10 +2,10 @@ from typing import List
 
 from pydantic import BaseModel
 
-from bumpify.core.config.objects import register_module_config
+from bumpify.core.config.objects import register_section
 
 
-@register_module_config("hook")
+@register_section("hook")
 class HookConfig(BaseModel):
     """Configuration object for hook module."""
 

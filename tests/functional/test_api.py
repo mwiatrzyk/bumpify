@@ -12,6 +12,7 @@ from bumpify.core.console.objects import Styled
 from bumpify.core.filesystem.interface import IFileSystemReader, IFileSystemReaderWriter
 from bumpify.core.semver.objects import SemVerConfig
 from bumpify.core.vcs.interface import IVcsConnector, IVcsReaderWriter
+from bumpify.core.vcs.objects import VCSConfig
 from bumpify.di import provider
 from tests import helpers
 from tests.matchers import ReprEqual
@@ -165,9 +166,9 @@ class TestInitCommand:
             uut.init(provider, presenter)
         loaded_config = tmpdir_config.load()
         assert loaded_config is not None
-        config = loaded_config.config
-        assert config.vcs.type.value == selected_repository_type
-        semver_config = loaded_config.require_module_config(SemVerConfig).config
+        vcs_config = loaded_config.require_section(VCSConfig).config
+        assert vcs_config.type.value == selected_repository_type
+        semver_config = loaded_config.require_section(SemVerConfig).config
         assert len(semver_config.version_files) == 2
         version_file_1 = semver_config.version_files[0]
         assert version_file_1.path == selected_version_file_1["path"]

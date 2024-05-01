@@ -1,6 +1,6 @@
-import dataclasses
 import textwrap
 import typing
+import dataclasses
 
 import pydantic
 
@@ -72,32 +72,48 @@ class ShellCommandError(BumpifyError):
 
 
 class ValidationError(BumpifyError):
-    """Generic exception for wrapping Pydantic validation error behind Bumpify
-    specific exception class."""
+    """Generic model validation error class.
 
+    This is mostly used for wrapping 3rd party validation errors behind
+    Bumpify-specific exception interface, allowing those to be handled in user
+    friendly way.
+    """
+
+    @dataclasses.dataclass
     class ErrorItem:
-        """Wraps single error."""
+        """Object containing information about single error."""
 
-        def __init__(self, error: dict):
-            self._error = error
+        #: Error location in a model that failed validation.
+        loc: tuple
+
+        #: Error message text.
+        msg: str
 
         @property
         def loc_str(self) -> str:
-            return ".".join(str(x) for x in self._error["loc"])
-
-        @property
-        def msg(self) -> str:
-            return self._error["msg"]
+            """Error location formatted as string."""
+            return ".".join(str(x) for x in self.loc)
 
     #: List of validation errors.
     errors: typing.List[ErrorItem]
 
-    #: Original Pydantic's validation error.
-    original_exc: pydantic.ValidationError
-
-    def __init__(self, original_exc: pydantic.ValidationError):
+    def __init__(self, errors: typing.List[ErrorItem], original_exc: Exception=None):
         super().__init__(original_exc)
-        self.errors = [self.ErrorItem(e) for e in original_exc.errors()]
+        self.errors = errors
+
+    def find_msg_by_loc(self, *loc) -> typing.Optional[str]:
+        """Return message for error location given via positional args.
+
+        If given location does not exist in error list, then ``None`` is
+        returned.
+        """
+        for item in self.errors:
+            if item.loc == loc:
+                return item.msg
 
     def __str__(self):
-        return str(self.original_exc)
+        rows = []
+        for e in self.errors:
+            rows.append(textwrap.indent(e.loc_str, " "*2))
+            rows.append(textwrap.indent(e.msg, " "*4))
+        return "\n" + "\n".join(rows)

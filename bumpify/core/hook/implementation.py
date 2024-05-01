@@ -43,7 +43,7 @@ class HookApiLoader(IHookApiLoader):
         self._filesystem_reader = filesystem_reader
 
     def load(self) -> IHookApi:
-        hook_config = self._loaded_config.config.load_module_config(HookConfig)
+        hook_config = self._loaded_config.config.load_section(HookConfig)
         if not hook_config:
             return self._HookApi({})
         all_hook_functions = {}

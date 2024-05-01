@@ -1,7 +1,24 @@
 import datetime
 import typing
+import enum
 
 from pydantic import BaseModel, field_validator
+
+from bumpify.core.config.objects import register_section
+
+
+@register_section("vcs")
+class VCSConfig(BaseModel):
+    """VCS repository configuration model."""
+
+    class Type(enum.Enum):
+        """Supported VCS types."""
+
+        AUTO = "auto"
+        GIT = "git"
+
+    #: VCS type.
+    type: Type
 
 
 class Commit(BaseModel):
