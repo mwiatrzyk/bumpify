@@ -1,3 +1,9 @@
+## 0.3.0 (2024-05-19)
+
+### BREAKING CHANGES
+
+- use domain-specific config objects and make `core.config` a generic framework for handling configuration
+
 ## 0.2.0 (2024-04-28)
 
 ### Feat
