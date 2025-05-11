@@ -1,3 +1,13 @@
+## 0.4.0 (2025-05-11)
+
+### BREAKING CHANGES
+
+- drop support for Python 3.8, add support for Python 3.12
+
+### Feat
+
+- drop support for Python 3.8, add support for Python 3.12
+
 ## 0.3.0 (2024-05-19)
 
 ### BREAKING CHANGES
