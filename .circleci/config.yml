@@ -78,10 +78,6 @@ workflows:
   test:
     jobs:
       - test:
-          name: "test-py38"
-          ver_major: 3
-          ver_minor: 8
-      - test:
           name: "test-py39"
           ver_major: 3
           ver_minor: 9
@@ -93,18 +89,16 @@ workflows:
           name: "test-py311"
           ver_major: 3
           ver_minor: 11
-      # TODO: Uncomment when mockify starts supporting 3.12
-      # - test:
-      #     name: "test-py312"
-      #     ver_major: 3
-      #     ver_minor: 12
+      - test:
+          name: "test-py312"
+          ver_major: 3
+          ver_minor: 12
       - bump:
           requires:
-            - "test-py38"
             - "test-py39"
             - "test-py310"
             - "test-py311"
-            #- "test-py312"
+            - "test-py312"
       - deploy:
           filters:
             branches:
