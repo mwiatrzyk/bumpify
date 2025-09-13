@@ -1,6 +1,6 @@
 import datetime
-import typing
 import enum
+import typing
 
 from pydantic import BaseModel, field_validator
 

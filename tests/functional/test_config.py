@@ -39,9 +39,9 @@ class TestConfigReaderWriter:
         loaded_config = sut.load()
         assert loaded_config is not None
         assert loaded_config.config_file_abspath == self.config_file_abspath
-        assert utils.json_dict(
-            loaded_config.config.data, exclude_none=True
-        ) == utils.json_dict(self.config.data, exclude_none=True)
+        assert utils.json_dict(loaded_config.config.data, exclude_none=True) == utils.json_dict(
+            self.config.data, exclude_none=True
+        )
 
     def test_load_returns_none_if_config_file_does_not_exist(self, sut: SUT):
         assert not self.tmpdir_fs.exists(self.config_file_path)

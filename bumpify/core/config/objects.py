@@ -1,11 +1,15 @@
 import dataclasses
 from typing import Dict, Generic, Optional, Type, TypeVar
 
-from pydantic import BaseModel
 import pydantic
+from pydantic import BaseModel
 
-from bumpify import utils, exc
-from bumpify.core.config.exc import ConfigValidationError, ModuleConfigNotRegistered, RequiredModuleConfigMissing
+from bumpify import exc, utils
+from bumpify.core.config.exc import (
+    ConfigValidationError,
+    ModuleConfigNotRegistered,
+    RequiredModuleConfigMissing,
+)
 
 MT = TypeVar("MT", bound=BaseModel)
 
@@ -78,7 +82,9 @@ class Config:
         try:
             return model_type(**data)
         except pydantic.ValidationError as e:
-            errors = [exc.ValidationError.ErrorItem((name,) + x['loc'], x['msg']) for x in e.errors()]
+            errors = [
+                exc.ValidationError.ErrorItem((name,) + x["loc"], x["msg"]) for x in e.errors()
+            ]
             raise exc.ValidationError(errors, original_exc=e)
 
 

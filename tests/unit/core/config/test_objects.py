@@ -1,7 +1,11 @@
 import pytest
 from pydantic import BaseModel
 
-from bumpify.core.config.exc import ConfigValidationError, ModuleConfigNotRegistered, RequiredModuleConfigMissing
+from bumpify.core.config.exc import (
+    ConfigValidationError,
+    ModuleConfigNotRegistered,
+    RequiredModuleConfigMissing,
+)
 from bumpify.core.config.objects import Config, LoadedConfig, register_section
 from bumpify.exc import ValidationError
 
@@ -44,12 +48,12 @@ class TestConfig:
         class Dummy(BaseModel):
             foo: int
 
-        self.uut.data = {'dummy': {}}
+        self.uut.data = {"dummy": {}}
         with pytest.raises(ValidationError) as excinfo:
             self.uut.load_section(Dummy)
         e = excinfo.value
         assert len(e.errors) == 1
-        assert e.find_msg_by_loc('dummy', 'foo') == "Field required"
+        assert e.find_msg_by_loc("dummy", "foo") == "Field required"
 
     def test_save_section_and_load_it_back(self):
 
@@ -95,14 +99,14 @@ class TestLoadedConfig:
         class Dummy(BaseModel):
             foo: int
 
-        self.uut.config.data = {'dummy': {}}
+        self.uut.config.data = {"dummy": {}}
         with pytest.raises(ConfigValidationError) as excinfo:
             self.uut.load_section(Dummy)
         e = excinfo.value
         assert e.config_file_abspath == self.uut.config_file_abspath
         assert isinstance(e.original_exc, ValidationError)
         assert len(e.original_exc.errors) == 1
-        assert e.original_exc.find_msg_by_loc('dummy', 'foo') == "Field required"
+        assert e.original_exc.find_msg_by_loc("dummy", "foo") == "Field required"
 
     def test_require_section_returns_section_if_config_is_found(self):
 

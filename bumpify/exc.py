@@ -1,6 +1,6 @@
+import dataclasses
 import textwrap
 import typing
-import dataclasses
 
 import pydantic
 
@@ -97,7 +97,7 @@ class ValidationError(BumpifyError):
     #: List of validation errors.
     errors: typing.List[ErrorItem]
 
-    def __init__(self, errors: typing.List[ErrorItem], original_exc: Exception=None):
+    def __init__(self, errors: typing.List[ErrorItem], original_exc: Exception = None):
         super().__init__(original_exc)
         self.errors = errors
 
@@ -114,6 +114,6 @@ class ValidationError(BumpifyError):
     def __str__(self):
         rows = []
         for e in self.errors:
-            rows.append(textwrap.indent(e.loc_str, " "*2))
-            rows.append(textwrap.indent(e.msg, " "*4))
+            rows.append(textwrap.indent(e.loc_str, " " * 2))
+            rows.append(textwrap.indent(e.msg, " " * 4))
         return "\n" + "\n".join(rows)
