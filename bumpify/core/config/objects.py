@@ -61,10 +61,7 @@ class Config:
         name = _module_config_models.get(model_type)
         if name is None:
             raise ModuleConfigNotRegistered(model_type)
-        if isinstance(model, Model):  # XXX: remove once modelity is used everywhere
-            data = dump_valid(model)
-        else:
-            data = model.model_dump()
+        data = dump_valid(model)
         data = utils.json_dict(data)
         self.data[name] = data
 
