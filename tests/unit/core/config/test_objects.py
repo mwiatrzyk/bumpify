@@ -1,6 +1,6 @@
 import pytest
-from pydantic import BaseModel
 
+from bumpify.model import Model
 from bumpify.core.config.exc import (
     ConfigValidationError,
     ModuleConfigNotRegistered,
@@ -18,7 +18,7 @@ class TestConfig:
 
     def test_save_section_fails_if_model_is_not_registered(self):
 
-        class Dummy(BaseModel):
+        class Dummy(Model):
             foo: int
 
         with pytest.raises(ModuleConfigNotRegistered) as excinfo:
@@ -27,7 +27,7 @@ class TestConfig:
 
     def test_load_section_fails_if_model_is_not_registered(self):
 
-        class Dummy(BaseModel):
+        class Dummy(Model):
             foo: int
 
         with pytest.raises(ModuleConfigNotRegistered) as excinfo:
@@ -37,7 +37,7 @@ class TestConfig:
     def test_load_section_returns_none_if_no_section_data_does_not_exist(self):
 
         @register_section("dummy")
-        class Dummy(BaseModel):
+        class Dummy(Model):
             foo: int
 
         assert self.uut.load_section(Dummy) is None
@@ -45,7 +45,7 @@ class TestConfig:
     def test_load_section_fails_if_mandatory_field_is_missing(self):
 
         @register_section("dummy")
-        class Dummy(BaseModel):
+        class Dummy(Model):
             foo: int
 
         self.uut.data = {"dummy": {}}
@@ -53,12 +53,12 @@ class TestConfig:
             self.uut.load_section(Dummy)
         e = excinfo.value
         assert len(e.errors) == 1
-        assert e.find_msg_by_loc("dummy", "foo") == "Field required"
+        assert e.find_msg_by_loc("dummy", "foo") == "this field is required"
 
     def test_save_section_and_load_it_back(self):
 
         @register_section("dummy")
-        class Dummy(BaseModel):
+        class Dummy(Model):
             foo: int
 
         dummy = Dummy(foo=123)
@@ -76,7 +76,7 @@ class TestLoadedConfig:
     def test_load_section_returns_none_when_no_config_available(self):
 
         @register_section("dummy")
-        class Dummy(BaseModel):
+        class Dummy(Model):
             foo: int
 
         assert self.uut.load_section(Dummy) is None
@@ -84,7 +84,7 @@ class TestLoadedConfig:
     def test_load_section_returns_data_when_config_present(self):
 
         @register_section("dummy")
-        class Dummy(BaseModel):
+        class Dummy(Model):
             foo: int
 
         dummy = Dummy(foo=123)
@@ -96,7 +96,7 @@ class TestLoadedConfig:
     def test_load_section_fails_if_mandatory_field_is_missing(self):
 
         @register_section("dummy")
-        class Dummy(BaseModel):
+        class Dummy(Model):
             foo: int
 
         self.uut.config.data = {"dummy": {}}
@@ -106,12 +106,12 @@ class TestLoadedConfig:
         assert e.config_file_abspath == self.uut.config_file_abspath
         assert isinstance(e.original_exc, ValidationError)
         assert len(e.original_exc.errors) == 1
-        assert e.original_exc.find_msg_by_loc("dummy", "foo") == "Field required"
+        assert e.original_exc.find_msg_by_loc("dummy", "foo") == "this field is required"
 
     def test_require_section_returns_section_if_config_is_found(self):
 
         @register_section("dummy")
-        class Dummy(BaseModel):
+        class Dummy(Model):
             foo: int
 
         dummy = Dummy(foo=123)
@@ -123,7 +123,7 @@ class TestLoadedConfig:
     def test_require_section_raises_exception_if_config_not_found(self):
 
         @register_section("dummy")
-        class Dummy(BaseModel):
+        class Dummy(Model):
             foo: int
 
         with pytest.raises(RequiredModuleConfigMissing) as excinfo:

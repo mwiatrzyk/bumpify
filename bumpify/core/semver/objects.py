@@ -4,10 +4,9 @@ import enum
 import re
 from typing import Dict, List, Optional, Union
 
-from pydantic import BaseModel
-
 from bumpify.core.config.objects import register_section
 from bumpify.core.vcs.objects import Commit, Tag
+from bumpify.model import Model
 
 from . import _constants, _parsing
 
@@ -22,10 +21,10 @@ class VersionComponent(enum.Enum):
 
 
 @register_section("semver")
-class SemVerConfig(BaseModel):
+class SemVerConfig(Model):
     """Model to store semantic versioning configuration."""
 
-    class VersionFile(BaseModel):
+    class VersionFile(Model):
         """Version file configuration model."""
 
         #: Path to a version file.
@@ -53,7 +52,7 @@ class SemVerConfig(BaseModel):
         #: This is used to encode/decode file during writing/reading. Defaults to UTF-8.
         encoding: str = "utf-8"
 
-    class ChangelogFile(BaseModel):
+    class ChangelogFile(Model):
         """Changelog file configuration model."""
 
         #: Path to a changelog file.
@@ -69,7 +68,7 @@ class SemVerConfig(BaseModel):
         #: encoding should be used.
         encoding: str = "utf-8"
 
-    class BumpRule(BaseModel):
+    class BumpRule(Model):
         """Bump rule model."""
 
         # TODO: Add validator to check if when_breaking >= when_feat >= when_fix
@@ -149,7 +148,7 @@ class SemVerConfig(BaseModel):
                 return rule
 
 
-class Version(BaseModel):
+class Version(Model):
     """Semantic version data model."""
 
     #: Major version number.
@@ -186,6 +185,7 @@ class Version(BaseModel):
                         return False
                     return left < right
             return True
+        return False
 
     def __gt__(self, other: "Version") -> bool:
         if self.__eq__(other):
@@ -372,7 +372,7 @@ class VersionTag:
         )
 
 
-class ConventionalCommitData(BaseModel):
+class ConventionalCommitData(Model):
     """Model representing data parsed from a conventional commit.
 
     Visit https://www.conventionalcommits.org/en/v1.0.0/ to read about
@@ -422,8 +422,7 @@ class ConventionalCommitData(BaseModel):
         return cls(**parser.output())
 
 
-@dataclasses.dataclass
-class ConventionalCommit:
+class ConventionalCommit(Model):
     """Glues together commit object and conventional commit data parsed from that commit object."""
 
     #: Repository commit object.
@@ -452,7 +451,7 @@ class ConventionalCommit:
         )
 
 
-class ChangelogEntryData(BaseModel):
+class ChangelogEntryData(Model):
     """Model representing release info description.
 
     Each release has information about fixes made, features introduced and
@@ -520,7 +519,7 @@ class ChangelogEntryData(BaseModel):
         return obj
 
 
-class ChangelogEntry(BaseModel):
+class ChangelogEntry(Model):
     """Model representing single entry inside a changelog."""
 
     #: Release version or ``None`` for unreleased.
@@ -546,7 +545,7 @@ class ChangelogEntry(BaseModel):
         return self.version is None
 
 
-class Changelog(BaseModel):
+class Changelog(Model):
     """Model representing project's changelog.
 
     This is basically an ordered collection of :class:`ChangelogEntry` objects.

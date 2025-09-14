@@ -1,8 +1,7 @@
 import dataclasses
 from typing import Dict, Generic, Optional, Type, TypeVar
 
-import pydantic
-from pydantic import BaseModel
+from modelity.api import ModelLoader, ModelError
 
 from bumpify import exc, utils
 from bumpify.core.config.exc import (
@@ -10,8 +9,9 @@ from bumpify.core.config.exc import (
     ModuleConfigNotRegistered,
     RequiredModuleConfigMissing,
 )
+from bumpify.model import Model, dump_valid
 
-MT = TypeVar("MT", bound=BaseModel)
+MT = TypeVar("MT", bound=Model)
 
 _module_config_models = {}
 
@@ -28,6 +28,8 @@ def register_section(name: str):
     """
 
     def decorator(cls):
+        if not issubclass(cls, Model):
+            raise TypeError(f"decorated type must be subclass of {Model!r} type")
         _module_config_models[cls] = name
         return cls
 
@@ -44,7 +46,7 @@ class Config:
     #: modified when sections are created or updated.
     data: Dict[str, dict] = dataclasses.field(default_factory=dict)
 
-    def save_section(self, model: BaseModel):
+    def save_section(self, model: Model):
         """Create or override section inside a config file.
 
         Encodes and and writes data under previously configured section (see
@@ -59,7 +61,10 @@ class Config:
         name = _module_config_models.get(model_type)
         if name is None:
             raise ModuleConfigNotRegistered(model_type)
-        data = model.model_dump()
+        if isinstance(model, Model):  # XXX: remove once modelity is used everywhere
+            data = dump_valid(model)
+        else:
+            data = model.model_dump()
         data = utils.json_dict(data)
         self.data[name] = data
 
@@ -79,11 +84,12 @@ class Config:
         data = self.data.get(name)
         if data is None:
             return None
+        model_loader = ModelLoader(model_type)
         try:
-            return model_type(**data)
-        except pydantic.ValidationError as e:
+            return model_loader(**data)
+        except ModelError as e:
             errors = [
-                exc.ValidationError.ErrorItem((name,) + x["loc"], x["msg"]) for x in e.errors()
+                exc.ValidationError.ErrorItem((name,) + tuple(x.loc), x.msg) for x in e.errors
             ]
             raise exc.ValidationError(errors, original_exc=e)
 

@@ -1,12 +1,16 @@
 import io
+import json
 from typing import List
+
+from bumpify.model import dump_valid
 
 from .objects import Changelog, ChangelogEntry
 
 
 def format_as_json(changelog: Changelog) -> str:
     """Formats changelog to JSON string."""
-    return changelog.model_dump_json(indent=2, exclude_none=True)
+    data = dump_valid(changelog, exclude_none=True)
+    return json.dumps(data, indent=2)
 
 
 def format_as_markdown(changelog: Changelog) -> str:

@@ -170,6 +170,7 @@ class TestFetchUnreleasedChanges:
         unreleased_changes = self.api.fetch_unreleased_changes(self.version_tag)
         assert unreleased_changes is not None
         assert len(unreleased_changes.others) == 1
+        print(unreleased_changes.others)
         assert len(unreleased_changes.others["test"]) == 1
         assert len(unreleased_changes.breaking_changes) == 1
         assert unreleased_changes.breaking_changes == ["a breaking test fix"]

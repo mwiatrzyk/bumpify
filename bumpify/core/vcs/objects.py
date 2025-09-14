@@ -1,14 +1,14 @@
 import datetime
 import enum
-import typing
 
-from pydantic import BaseModel, field_validator
+from modelity.api import field_postprocessor
 
 from bumpify.core.config.objects import register_section
+from bumpify.model import Model
 
 
 @register_section("vcs")
-class VCSConfig(BaseModel):
+class VCSConfig(Model):
     """VCS repository configuration model."""
 
     class Type(enum.Enum):
@@ -21,7 +21,7 @@ class VCSConfig(BaseModel):
     type: Type
 
 
-class Commit(BaseModel):
+class Commit(Model):
     """Model representing information parsed from a single commit."""
 
     #: Commit's revision.
@@ -45,12 +45,12 @@ class Commit(BaseModel):
     #: Commit message
     message: str
 
-    @field_validator("message")
-    def _preprocess_message(cls, v: typing.Any):
-        return v.strip()
+    @field_postprocessor("message")
+    def _preprocess_message(value: str):  # type: ignore
+        return value.strip()
 
 
-class Tag(BaseModel):
+class Tag(Model):
     """Model representing information parsed from a repository tag."""
 
     #: Revision of a commit that was tagged with this tag.

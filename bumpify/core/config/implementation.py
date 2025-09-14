@@ -1,8 +1,9 @@
 from typing import Optional
 
-import pydantic
 import tomlkit
 import tomlkit.exceptions
+
+from modelity.api import ModelError
 
 from bumpify import exc, utils
 from bumpify.core.config.exc import ConfigParseError, ConfigValidationError
@@ -60,7 +61,7 @@ class ConfigReaderWriter(IConfigReaderWriter):
                 config_file_abspath=self.abspath(),
                 config=Config(data=data),
             )
-        except pydantic.ValidationError as e:
+        except ModelError as e:  # FIXME: This line is not tested; is it used?
             raise ConfigValidationError(self.abspath(), exc.ValidationError(e))
 
     def save(self, config: Config):

@@ -1,12 +1,11 @@
 from typing import List
 
-from pydantic import BaseModel
-
+from bumpify.model import Model
 from bumpify.core.config.objects import register_section
 
 
 @register_section("hook")
-class HookConfig(BaseModel):
+class HookConfig(Model):
     """Configuration object for hook module."""
 
     #: List of hook file(-s) relative paths.

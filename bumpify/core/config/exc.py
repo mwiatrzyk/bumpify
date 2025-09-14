@@ -1,7 +1,3 @@
-from typing import Type
-
-import pydantic
-
 from bumpify import exc
 
 
@@ -60,9 +56,9 @@ class ModuleConfigNotRegistered(ConfigError):
     __message_template__ = "{self.model_type}"
 
     #: Type of a model that was not registered.
-    model_type: Type[pydantic.BaseModel]
+    model_type: type
 
-    def __init__(self, model_type: Type[pydantic.BaseModel]):
+    def __init__(self, model_type: type):
         super().__init__()
         self.model_type = model_type
 
@@ -76,9 +72,9 @@ class RequiredModuleConfigMissing(ConfigError):
     config_file_abspath: str
 
     #: Module config object type.
-    model_type: Type[pydantic.BaseModel]
+    model_type: type
 
-    def __init__(self, config_file_abspath: str, model_type: Type[pydantic.BaseModel]):
+    def __init__(self, config_file_abspath: str, model_type: type):
         super().__init__()
         self.config_file_abspath = config_file_abspath
         self.model_type = model_type

@@ -2,8 +2,6 @@ import dataclasses
 import textwrap
 import typing
 
-import pydantic
-
 
 class BumpifyError(Exception):
     """Common base class for all Bumpify specific exceptions."""

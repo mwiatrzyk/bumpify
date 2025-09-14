@@ -1,9 +1,9 @@
 import pytest
 import tomlkit
 import tomlkit.exceptions
-from pydantic import BaseModel
 
 from bumpify import utils
+from bumpify.model import Model
 from bumpify.core.config.exc import ConfigParseError, ConfigValidationError
 from bumpify.core.config.implementation import ConfigReaderWriter
 from bumpify.core.config.interface import IConfigReaderWriter
@@ -63,21 +63,23 @@ class TestConfigReaderWriter:
 
     @pytest.mark.parametrize(
         "payload, expected_errors",
-        [(b'[vcs]\ntype="dummy"', [("vcs.type", "Input should be 'auto' or 'git'")])],
+        [(b'[vcs]\ntype="dummy"', [("vcs.type", "value not allowed; allowed values: <Type.AUTO: 'auto'>, <Type.GIT: 'git'>")])],
     )
     def test_load_fails_with_validation_error_if_config_file_has_invalid_settings(
         self, sut: SUT, payload, expected_errors
     ):
         self.tmpdir_fs.write(self.config_file_path, payload)
+        loaded_config = sut.load()
+        assert loaded_config is not None
         with pytest.raises(ConfigValidationError) as excinfo:
-            sut.load().require_section(VCSConfig)
+            loaded_config.require_section(VCSConfig)
         assert excinfo.value.config_file_abspath == self.config_file_abspath
         assert [(e.loc_str, e.msg) for e in excinfo.value.original_exc.errors] == expected_errors
 
     def test_register_section_model_and_parse_module_settings(self, sut: SUT):
 
         @register_section("dummy")
-        class Dummy(BaseModel):
+        class Dummy(Model):
             foo: int
 
         dummy = Dummy(foo=123)
